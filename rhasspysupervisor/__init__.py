@@ -179,6 +179,7 @@ def print_wake(
 
 # -----------------------------------------------------------------------------
 
+# TODO: Add support for remote
 
 def print_speech_to_text(
     stt_system: str,
@@ -252,7 +253,7 @@ def print_speech_to_text(
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for fuzzywuzzy
+# TODO: Add support for remote, fuzzywuzzy, adapt, rasaNLU, flair
 
 def print_intent_recognition(
     intent_system: str,
@@ -319,7 +320,7 @@ def print_dialogue(
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for flite, picotts, MaryTTS, Google, NanoTTS
+# TODO: Add support for remote, flite, picotts, MaryTTS, Google, NanoTTS
 
 def print_text_to_speech(
     tts_system: str,
@@ -362,6 +363,7 @@ def print_text_to_speech(
 
 # -----------------------------------------------------------------------------
 
+# TODO: Add support for remote
 
 def print_speakers(
     sound_system: str,
