@@ -35,6 +35,12 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO):
         print_microphone(mic_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
 
+    # Speakers
+    sound_system = profile.get("sounds.system", "dummy")
+    if sound_system != "dummy":
+        print_speakers(sound_system, profile, out_file, **mqtt_settings)
+        write_boilerplate()
+
     # Wake Word
     wake_system = profile.get("wake.system", "dummy")
     if mic_system != "dummy":
@@ -51,6 +57,12 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO):
     intent_system = profile.get("intent.system", "dummy")
     if intent_system != "dummy":
         print_intent_recognition(intent_system, profile, out_file, **mqtt_settings)
+        write_boilerplate()
+
+    # Text to Speech
+    tts_system = profile.get("text_to_speech.system", "dummy")
+    if tts_system != "dummy":
+        print_text_to_speech(tts_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
 
     # Dialogue Management
@@ -74,7 +86,18 @@ def print_microphone(
     """Print command for microphone system"""
     assert mic_system in ["arecord"], "Only arecord is supported for microphone.system"
 
-    record_command = ["arecord", "-r", "16000", "-f", "S16_LE", "-c", "1", "-t", "raw"]
+    record_command = [
+        "arecord",
+        "-q",
+        "-r",
+        "16000",
+        "-f",
+        "S16_LE",
+        "-c",
+        "1",
+        "-t",
+        "raw",
+    ]
     mic_device = profile.get("microphone.arecord.device", "").strip()
     if mic_device:
         record_command.extend(["-D", str(mic_device)])
@@ -265,3 +288,81 @@ def print_dialogue(
 
     print("[program:dialogue]")
     print("command=", " ".join(dialogue_command), sep="", file=out_file)
+
+
+# -----------------------------------------------------------------------------
+
+
+def print_text_to_speech(
+    tts_system: str,
+    profile: Profile,
+    out_file: typing.TextIO,
+    siteId: str = "default",
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+):
+    """Print command for text to speech system"""
+    assert tts_system in [
+        "espeak"
+    ], "Only espeak is supported for text_to_speech.system"
+
+    if tts_system == "espeak":
+        tts_command = ["espeak", "--stdout"]
+        voice = profile.get("text_to_speech.espeak.voice", "").strip()
+        if not voice:
+            voice = profile.get("language", "").strip()
+
+        if voice:
+            tts_command.extend(["-v", str(voice)])
+
+        tts_command = [
+            "rhasspy-tts-cli-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--tts-command",
+            shlex.quote(" ".join(tts_command)),
+        ]
+
+    print("[program:text_to_speech]")
+    print("command=", " ".join(tts_command), sep="", file=out_file)
+
+
+# -----------------------------------------------------------------------------
+
+
+def print_speakers(
+    sound_system: str,
+    profile: Profile,
+    out_file: typing.TextIO,
+    siteId: str = "default",
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+):
+    """Print command for audio output system"""
+    assert sound_system in ["aplay"], "Only aplay is supported for sounds.system"
+
+    play_command = ["aplay", "-q", "-t", "wav"]
+    sound_device = profile.get("sounds.arecord.device", "").strip()
+    if sound_device:
+        play_command.extend(["-D", str(mic_device)])
+
+    play_command = [
+        "rhasspy-speakers-cli-hermes",
+        "--debug",
+        "--siteId",
+        str(siteId),
+        "--host",
+        str(mqtt_host),
+        "--port",
+        str(mqtt_port),
+        "--play-command",
+        shlex.quote(" ".join(play_command)),
+    ]
+
+    print("[program:speakers]")
+    print("command=", " ".join(play_command), sep="", file=out_file)
