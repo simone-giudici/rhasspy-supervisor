@@ -4,6 +4,8 @@ import typing
 
 from rhasspyprofile import Profile
 
+# TODO: Add support for "command" systems
+# TODO: MQTT username/password
 
 def profile_to_conf(profile: Profile, out_file: typing.TextIO):
     """Generate supervisord conf from Rhasspy profile"""
@@ -31,19 +33,19 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO):
 
     # Microphone
     mic_system = profile.get("microphone.system", "dummy")
-    if mic_system != "dummy":
+    if mic_system not in ["dummy", "hermes"]:
         print_microphone(mic_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
 
     # Speakers
     sound_system = profile.get("sounds.system", "dummy")
-    if sound_system != "dummy":
+    if sound_system not in ["dummy", "hermes"]:
         print_speakers(sound_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
 
     # Wake Word
     wake_system = profile.get("wake.system", "dummy")
-    if mic_system != "dummy":
+    if mic_system not in ["dummy", "hermes"]:
         print_wake(wake_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
 
@@ -74,6 +76,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO):
 
 # -----------------------------------------------------------------------------
 
+# TODO: Add support for PyAudio
 
 def print_microphone(
     mic_system: str,
@@ -127,6 +130,7 @@ def print_microphone(
 
 # -----------------------------------------------------------------------------
 
+# TODO: Add support for snowboy
 
 def print_wake(
     wake_system: str,
@@ -191,6 +195,7 @@ def print_speech_to_text(
     ], "Only pocketsphinx/kaldi are supported for speech_to_text.system"
 
     if stt_system == "pocketsphinx":
+        # Pocketsphinx
         acoustic_model = profile.get("speech_to_text.pocketsphinx.acoustic_model")
         assert acoustic_model
 
@@ -217,8 +222,29 @@ def print_speech_to_text(
             shlex.quote(str(profile.read_path(language_model))),
         ]
     elif stt_system == "kaldi":
-        # TODO: Add Kaldi support
-        pass
+        # Kaldi
+        model_dir = profile.get("speech_to_text.kaldi.model_dir")
+        assert model_dir
+        model_dir = profile.read_path(model_dir)
+
+        graph = profile.get("speech_to_text.kaldi.graph")
+        assert graph
+        graph = model_dir / graph
+
+        stt_command = [
+            "rhasspy-asr-kaldi-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--model-dir",
+            shlex.quote(str(model_dir)),
+            "--graph-dir",
+            shlex.quote(str(graph)),
+        ]
 
     print("[program:speech_to_text]")
     print("command=", " ".join(stt_command), sep="", file=out_file)
@@ -226,6 +252,7 @@ def print_speech_to_text(
 
 # -----------------------------------------------------------------------------
 
+# TODO: Add support for fuzzywuzzy
 
 def print_intent_recognition(
     intent_system: str,
@@ -292,6 +319,7 @@ def print_dialogue(
 
 # -----------------------------------------------------------------------------
 
+# TODO: Add support for flite, picotts, MaryTTS, Google, NanoTTS
 
 def print_text_to_speech(
     tts_system: str,
