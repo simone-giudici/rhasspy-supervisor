@@ -1,18 +1,24 @@
 """Tools for generating supervisord conf files for Rhasspy"""
 import shlex
 import typing
+from pathlib import Path
 
 from rhasspyprofile import Profile
 
 # TODO: Add support for "command" systems
 # TODO: MQTT username/password
 
-def profile_to_conf(profile: Profile, out_file: typing.TextIO):
+
+def profile_to_conf(
+    profile: Profile,
+    out_file: typing.TextIO,
+    hbmqtt_conf_path: typing.Optional[Path] = None,
+    local_mqtt_port=12183,
+):
     """Generate supervisord conf from Rhasspy profile"""
 
     def write_boilerplate():
         """Write boilerplate settings"""
-        print("killasgroup=true", file=out_file)
         print("stopasgroup=true", file=out_file)
         print("stdout_logfile=/dev/stdout", file=out_file)
         print("stdout_logfile_maxbytes=0", file=out_file)
@@ -31,52 +37,150 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO):
         "mqtt_port": int(profile.get("mqtt.port", 1883)),
     }
 
+    remote_mqtt = profile.get("mqtt.enabled", False)
+    if remote_mqtt:
+        # Use external broker
+        mqtt_usernmae = str(profile.get("mqtt.username", "")).strip()
+        mqtt_password = str(profile.get("mqtt.password", "")).strip()
+
+        if mqtt_username:
+            # Add username/password
+            mqtt_settings["mqtt_username"] = mqtt_username
+            mqtt_settings["mqtt_password"] = mqtt_password
+    else:
+        # Use internal broker (hbmqtt) on custom port
+        assert hbmqtt_conf_path, "Need hbmqtt configuration path"
+
+        # Write hbmqtt YAML configuration file
+        with open(hbmqtt_conf_path, "w") as hbmqtt_file:
+            print("listeners:", file=hbmqtt_file)
+            print("    default:", file=hbmqtt_file)
+            print("        type: tcp", file=hbmqtt_file)
+            print(f"        bind: 127.0.0.1:{local_mqtt_port}", file=hbmqtt_file)
+            print("auth:", file=hbmqtt_file)
+            print("    allow-anonymous: true", file=hbmqtt_file)
+            print("topic-check:", file=hbmqtt_file)
+            print("    enabled: false", file=hbmqtt_file)
+
+        mqtt_settings["mqtt_port"] = local_mqtt_port
+        print_hbmqtt(
+            out_file,
+            hbmqtt_conf_path,
+            mqtt_host=mqtt_settings["mqtt_host"],
+            mqtt_port=mqtt_settings["mqtt_port"],
+        )
+        write_boilerplate()
+
+    # -------------------------------------------------------------------------
+
+    # Web Interface
+    print_webserver(profile, out_file, **mqtt_settings)
+    write_boilerplate()
+
     # Microphone
     mic_system = profile.get("microphone.system", "dummy")
     if mic_system not in ["dummy", "hermes"]:
         print_microphone(mic_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
+    else:
+        _LOGGER.debug("Microphone disabled (system=%s)", mic_system)
 
     # Speakers
     sound_system = profile.get("sounds.system", "dummy")
     if sound_system not in ["dummy", "hermes"]:
         print_speakers(sound_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
+    else:
+        _LOGGER.debug("Speakers disabled (system=%s)", sound_system)
 
     # Wake Word
     wake_system = profile.get("wake.system", "dummy")
     if mic_system not in ["dummy", "hermes"]:
         print_wake(wake_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
+    else:
+        _LOGGER.debug("Wake word disabled (system=%s)", wake_system)
 
     # Speech to Text
     stt_system = profile.get("speech_to_text.system", "dummy")
     if stt_system != "dummy":
         print_speech_to_text(stt_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
+    else:
+        _LOGGER.debug("Speech to text disabled (system=%s)", stt_system)
 
     # Intent Recognition
     intent_system = profile.get("intent.system", "dummy")
     if intent_system != "dummy":
         print_intent_recognition(intent_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
+    else:
+        _LOGGER.debug("Intent recognition disabled (system=%s)", intent_system)
 
     # Text to Speech
     tts_system = profile.get("text_to_speech.system", "dummy")
     if tts_system != "dummy":
         print_text_to_speech(tts_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
+    else:
+        _LOGGER.debug("Text to speech disabled (system=%s)", tts_system)
 
     # Dialogue Management
     dialogue_system = profile.get("dialogue.system", "dummy")
     if dialogue_system != "dummy":
         print_dialogue(dialogue_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
+    else:
+        _LOGGER.debug("Dialogue disabled (system=%s)", dialogue_system)
 
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for PyAudio
+
+def print_hbmqtt(
+    out_file: typing.TextIO, hbmqtt_conf_path: Path, mqtt_host: str, mqtt_port: int
+):
+    """Print command for internal MQTT broker (hbmqtt)"""
+    mqtt_command = ["hbmqtt", "-c", str(hbmqtt_conf_path)]
+
+    print("[program:mqtt]", file=out_file)
+    print("command=", " ".join(mqtt_command), sep="", file=out_file)
+
+    # Ensure broker starts first
+    print("priority=0", file=out_file)
+
+
+# -----------------------------------------------------------------------------
+
+
+def print_webserver(
+    profile: Profile, out_file: typing.TextIO, mqtt_host: str, mqtt_port: int, **kwargs
+):
+    """Print command for Rhasspy web server (http://localhost:12101)"""
+    web_command = [
+        "rhasspy-server-hermes",
+        "--profile",
+        profile.name,
+        "--system-profiles",
+        str(profile.system_profiles_dir),
+        "--user-profiles",
+        str(profile.user_profiles_dir),
+        "--web-dir",
+        "web",
+        "--mqtt-host",
+        str(mqtt_host),
+        "--mqtt-port",
+        str(mqtt_port),
+    ]
+
+    print("[program:web]", file=out_file)
+    print("command=", " ".join(web_command), sep="", file=out_file)
+
+
+# -----------------------------------------------------------------------------
+
+# TODO: Add chunk sizes
+
 
 def print_microphone(
     mic_system: str,
@@ -87,50 +191,76 @@ def print_microphone(
     mqtt_port: int = 1883,
 ):
     """Print command for microphone system"""
-    assert mic_system in ["arecord"], "Only arecord is supported for microphone.system"
-
-    record_command = [
+    assert mic_system in [
         "arecord",
-        "-q",
-        "-r",
-        "16000",
-        "-f",
-        "S16_LE",
-        "-c",
-        "1",
-        "-t",
-        "raw",
-    ]
-    mic_device = profile.get("microphone.arecord.device", "").strip()
-    if mic_device:
-        record_command.extend(["-D", str(mic_device)])
+        "pyaudio",
+    ], "Only arecord/pyaudio are supported for microphone.system"
 
-    mic_command = [
-        "rhasspy-microphone-cli-hermes",
-        "--debug",
-        "--siteId",
-        str(siteId),
-        "--host",
-        str(mqtt_host),
-        "--port",
-        str(mqtt_port),
-        "--sample-rate",
-        "16000",
-        "--sample-width",
-        "2",
-        "--channels",
-        "1",
-        "--record-command",
-        shlex.quote(" ".join(record_command)),
-    ]
+    if mic_system == "arecord":
+        record_command = [
+            "arecord",
+            "-q",
+            "-r",
+            "16000",
+            "-f",
+            "S16_LE",
+            "-c",
+            "1",
+            "-t",
+            "raw",
+        ]
+        mic_device = profile.get("microphone.arecord.device", "").strip()
+        if mic_device:
+            record_command.extend(["-D", str(mic_device)])
 
-    print("[program:microphone]")
+        mic_command = [
+            "rhasspy-microphone-cli-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--sample-rate",
+            "16000",
+            "--sample-width",
+            "2",
+            "--channels",
+            "1",
+            "--record-command",
+            shlex.quote(" ".join(record_command)),
+        ]
+    elif mic_system == "pyaudio":
+        mic_command = [
+            "rhasspy-microphone-pyaudio-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--sample-rate",
+            "16000",
+            "--sample-width",
+            "2",
+            "--channels",
+            "1",
+        ]
+
+        mic_device = profile.get("microphone.pyaudio.device", "").strip()
+        if mic_device:
+            mic_command.extend(["--device-index", str(mic_device)])
+
+    print("[program:microphone]", file=out_file)
     print("command=", " ".join(mic_command), sep="", file=out_file)
 
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for snowboy
+# TODO: Add support for snowboy, precise
+
 
 def print_wake(
     wake_system: str,
@@ -173,13 +303,14 @@ def print_wake(
         str(sensitivity),
     ]
 
-    print("[program:wake_word]")
+    print("[program:wake_word]", file=out_file)
     print("command=", " ".join(wake_command), sep="", file=out_file)
 
 
 # -----------------------------------------------------------------------------
 
 # TODO: Add support for remote
+
 
 def print_speech_to_text(
     stt_system: str,
@@ -247,13 +378,14 @@ def print_speech_to_text(
             shlex.quote(str(graph)),
         ]
 
-    print("[program:speech_to_text]")
+    print("[program:speech_to_text]", file=out_file)
     print("command=", " ".join(stt_command), sep="", file=out_file)
 
 
 # -----------------------------------------------------------------------------
 
 # TODO: Add support for remote, fuzzywuzzy, adapt, rasaNLU, flair
+
 
 def print_intent_recognition(
     intent_system: str,
@@ -285,7 +417,7 @@ def print_intent_recognition(
         shlex.quote(str(profile.read_path(graph))),
     ]
 
-    print("[program:intent_recognition]")
+    print("[program:intent_recognition]", file=out_file)
     print("command=", " ".join(intent_command), sep="", file=out_file)
 
 
@@ -314,13 +446,14 @@ def print_dialogue(
         str(mqtt_port),
     ]
 
-    print("[program:dialogue]")
+    print("[program:dialogue]", file=out_file)
     print("command=", " ".join(dialogue_command), sep="", file=out_file)
 
 
 # -----------------------------------------------------------------------------
 
 # TODO: Add support for remote, flite, picotts, MaryTTS, Google, NanoTTS
+
 
 def print_text_to_speech(
     tts_system: str,
@@ -357,13 +490,12 @@ def print_text_to_speech(
             shlex.quote(" ".join(tts_command)),
         ]
 
-    print("[program:text_to_speech]")
+    print("[program:text_to_speech]", file=out_file)
     print("command=", " ".join(tts_command), sep="", file=out_file)
 
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for remote
 
 def print_speakers(
     sound_system: str,
@@ -394,5 +526,5 @@ def print_speakers(
         shlex.quote(" ".join(play_command)),
     ]
 
-    print("[program:speakers]")
+    print("[program:speakers]", file=out_file)
     print("command=", " ".join(play_command), sep="", file=out_file)

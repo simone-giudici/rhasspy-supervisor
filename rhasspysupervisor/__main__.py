@@ -21,13 +21,27 @@ def main():
     )
     parser.add_argument(
         "--system-profiles",
-        type=str,
         help="Directory with base profile files (read only, default=$CWD/profiles)",
     )
     parser.add_argument(
         "--user-profiles",
-        type=str,
         help="Directory with user profile files (read/write, default=$HOME/.config/rhasspy/profiles)",
+    )
+    parser.add_argument(
+        "--supervisord-conf",
+        default="supervisord.conf",
+        help="Name of supervisord configuration file to write in profile (default: supervisord.conf)",
+    )
+    parser.add_argument(
+        "--hbmqtt-conf",
+        default="hbmqtt.yml",
+        help="Name of hbmqtt configuration file to write in profile (default: hbmqtt.yml)",
+    )
+    parser.add_argument(
+        "--local-mqtt-port",
+        type=int,
+        default=12183,
+        help="Port to use for internal MQTT broker (default: 12183)",
     )
     parser.add_argument(
         "--debug", action="store_true", help="Print DEBUG message to console"
@@ -41,9 +55,13 @@ def main():
 
     if not args.system_profiles:
         args.system_profiles = Path("profiles")
+    else:
+        args.system_profiles = Path(args.system_profiles)
 
     if not args.user_profiles:
         args.user_profiles = Path("~/.config/rhasspy/profiles").expanduser()
+    else:
+        args.user_profiles = Path(args.user_profiles)
 
     _LOGGER.debug(args)
 
@@ -52,7 +70,18 @@ def main():
     profile = Profile(args.profile, args.system_profiles, args.user_profiles)
 
     # Convert to supervisord conf
-    profile_to_conf(profile, sys.stdout)
+    supervisord_conf_path = args.user_profiles / args.profile / args.supervisord_conf
+    hbmqtt_conf_path = args.user_profiles / args.profile / args.hbmqtt_conf
+
+    with open(supervisord_conf_path, "w") as conf_file:
+        profile_to_conf(
+            profile,
+            conf_file,
+            hbmqtt_conf_path=hbmqtt_conf_path,
+            local_mqtt_port=args.local_mqtt_port,
+        )
+
+    _LOGGER.debug("Wrote %s", str(supervisord_conf_path))
 
 
 # -----------------------------------------------------------------------------
