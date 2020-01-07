@@ -271,37 +271,88 @@ def print_wake(
     mqtt_port: int = 1883,
 ):
     """Print command for wake system"""
-    assert wake_system in ["porcupine"], "Only porcupine is supported for wake.system"
+    assert wake_system in [
+        "porcupine",
+        "snowboy",
+    ], "Only porcupine/snowboy are supported for wake.system"
 
-    library = profile.get("wake.porcupine.library_path")
-    assert library
+    if wake_system == "porcupine":
+        library = profile.get("wake.porcupine.library_path")
+        assert library
 
-    model = profile.get("wake.porcupine.model_path")
-    assert model
+        model = profile.get("wake.porcupine.model_path")
+        assert model
 
-    keyword = profile.get("wake.porcupine.keyword_path")
-    assert keyword
+        keyword = profile.get("wake.porcupine.keyword_path")
+        assert keyword
 
-    sensitivity = profile.get("wake.porcupine.sensitivity", "0.5")
+        sensitivity = profile.get("wake.porcupine.sensitivity", "0.5")
 
-    wake_command = [
-        "rhasspy-wake-porcupine-hermes",
-        "--debug",
-        "--siteId",
-        str(siteId),
-        "--host",
-        str(mqtt_host),
-        "--port",
-        str(mqtt_port),
-        "--library",
-        shlex.quote(str(profile.read_path(library))),
-        "--model",
-        shlex.quote(str(profile.read_path(model))),
-        "--keyword",
-        shlex.quote(str(profile.read_path(keyword))),
-        "--sensitivity",
-        str(sensitivity),
-    ]
+        wake_command = [
+            "rhasspy-wake-porcupine-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--library",
+            shlex.quote(str(profile.read_path(library))),
+            "--model",
+            shlex.quote(str(profile.read_path(model))),
+            "--keyword",
+            shlex.quote(str(profile.read_path(keyword))),
+            "--sensitivity",
+            str(sensitivity),
+        ]
+    elif wake_system == "snowboy":
+        wake_command = [
+            "rhasspy-wake-snowboy-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+        ]
+
+        # Default settings
+        sensitivity = str(profile.get("wake.snowboy.sensitivity", "0.5"))
+        audio_gain = float(profile.get("wake.snowboy.audio_gain", "1.0"))
+        apply_frontend = bool(profile.get("wake.snowboy.apply_frontend", False))
+
+        model_names: typing.List[str] = profile.get(
+            "wake.snowboy.model", "snowboy/snowboy.umdl"
+        ).split(",")
+
+        model_settings: typing.Dict[str, typing.Dict[str, typing.Any]] = profile.get(
+            "wake.snowboy.model_settings", {}
+        )
+
+        models_dict = {}
+
+        for model_name in model_names:
+            # Add default settings
+            settings = model_settings.get(model_name, {})
+            if "sensitivity" not in settings:
+                settings["sensitivity"] = sensitivity
+
+            if "audio_gain" not in settings:
+                settings["audio_gain"] = audio_gain
+
+            if "apply_frontend" not in settings:
+                settings["apply_frontend"] = apply_frontend
+
+            model_path = profile.read_path(model_name)
+            model_args = [
+                str(model_path),
+                str(settings["sensitivity"]),
+                str(settings["audio_gain"]),
+                str(settings["apply_frontend"]),
+            ]
+            wake_command.extend(["--model"] + model_args)
 
     print("[program:wake_word]", file=out_file)
     print("command=", " ".join(wake_command), sep="", file=out_file)
