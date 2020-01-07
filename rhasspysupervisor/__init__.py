@@ -6,7 +6,6 @@ from pathlib import Path
 from rhasspyprofile import Profile
 
 # TODO: Add support for "command" systems
-# TODO: MQTT username/password
 
 
 def profile_to_conf(
@@ -259,7 +258,7 @@ def print_microphone(
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for snowboy, precise
+# TODO: Add support for precise
 
 
 def print_wake(
