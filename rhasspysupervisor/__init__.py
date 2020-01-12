@@ -2,7 +2,6 @@
 import logging
 import shlex
 import typing
-from pathlib import Path
 
 from rhasspyprofile import Profile
 
@@ -23,8 +22,6 @@ def profile_to_conf(
         print("stopasgroup=true", file=out_file)
         print("stdout_logfile=/dev/stdout", file=out_file)
         print("stdout_logfile_maxbytes=0", file=out_file)
-        # print("stdout_events_enabled=true", file=out_file)
-        # print("stderr_events_enabled=true", file=out_file)
         print("redirect_stderr=true", file=out_file)
         print("", file=out_file)
 
@@ -32,13 +29,6 @@ def profile_to_conf(
     print("[supervisord]", file=out_file)
     print("nodaemon=true", file=out_file)
     print("", file=out_file)
-
-    # print("[eventlistener:stdout]", file=out_file)
-    # print("command=supervisor_stdout", file=out_file)
-    # print("buffer_size=100", file=out_file)
-    # print("events=PROCESS_LOG", file=out_file)
-    # print("result_handler=supervisor_stdout:event_handler", file=out_file)
-    # print("", file=out_file)
 
     # MQTT
     mqtt_settings = {
@@ -68,10 +58,6 @@ def profile_to_conf(
         write_boilerplate()
 
     # -------------------------------------------------------------------------
-
-    # Web Interface
-    # print_webserver(profile, out_file, **mqtt_settings)
-    # write_boilerplate()
 
     # Microphone
     mic_system = profile.get("microphone.system", "dummy")
@@ -327,8 +313,6 @@ def print_wake(
             "wake.snowboy.model_settings", {}
         )
 
-        models_dict = {}
-
         for model_name in model_names:
             # Add default settings
             settings = model_settings.get(model_name, {})
@@ -558,7 +542,7 @@ def print_speakers(
     play_command = ["aplay", "-q", "-t", "wav"]
     sound_device = profile.get("sounds.arecord.device", "").strip()
     if sound_device:
-        play_command.extend(["-D", str(mic_device)])
+        play_command.extend(["-D", str(sound_device)])
 
     play_command = [
         "rhasspy-speakers-cli-hermes",

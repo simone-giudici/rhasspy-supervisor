@@ -1,7 +1,6 @@
 """Command-line interface to rhasspysupervisor"""
 import argparse
 import logging
-import sys
 from pathlib import Path
 
 from rhasspyprofile import Profile
