@@ -33,11 +33,6 @@ def main():
         help="Name of supervisord configuration file to write in profile (default: supervisord.conf)",
     )
     parser.add_argument(
-        "--hbmqtt-conf",
-        default="hbmqtt.yml",
-        help="Name of hbmqtt configuration file to write in profile (default: hbmqtt.yml)",
-    )
-    parser.add_argument(
         "--local-mqtt-port",
         type=int,
         default=12183,
@@ -71,15 +66,9 @@ def main():
 
     # Convert to supervisord conf
     supervisord_conf_path = args.user_profiles / args.profile / args.supervisord_conf
-    hbmqtt_conf_path = args.user_profiles / args.profile / args.hbmqtt_conf
 
     with open(supervisord_conf_path, "w") as conf_file:
-        profile_to_conf(
-            profile,
-            conf_file,
-            hbmqtt_conf_path=hbmqtt_conf_path,
-            local_mqtt_port=args.local_mqtt_port,
-        )
+        profile_to_conf(profile, conf_file, local_mqtt_port=args.local_mqtt_port)
 
     _LOGGER.debug("Wrote %s", str(supervisord_conf_path))
 

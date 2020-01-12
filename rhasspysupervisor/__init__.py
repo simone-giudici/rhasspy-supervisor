@@ -1,9 +1,12 @@
 """Tools for generating supervisord conf files for Rhasspy"""
+import logging
 import shlex
 import typing
 from pathlib import Path
 
 from rhasspyprofile import Profile
+
+_LOGGER = logging.getLogger(__name__)
 
 # TODO: Add support for "command" systems
 
@@ -11,7 +14,6 @@ from rhasspyprofile import Profile
 def profile_to_conf(
     profile: Profile,
     out_file: typing.TextIO,
-    hbmqtt_conf_path: typing.Optional[Path] = None,
     local_mqtt_port=12183,
 ):
     """Generate supervisord conf from Rhasspy profile"""
@@ -21,6 +23,8 @@ def profile_to_conf(
         print("stopasgroup=true", file=out_file)
         print("stdout_logfile=/dev/stdout", file=out_file)
         print("stdout_logfile_maxbytes=0", file=out_file)
+        # print("stdout_events_enabled=true", file=out_file)
+        # print("stderr_events_enabled=true", file=out_file)
         print("redirect_stderr=true", file=out_file)
         print("", file=out_file)
 
@@ -28,6 +32,13 @@ def profile_to_conf(
     print("[supervisord]", file=out_file)
     print("nodaemon=true", file=out_file)
     print("", file=out_file)
+
+    # print("[eventlistener:stdout]", file=out_file)
+    # print("command=supervisor_stdout", file=out_file)
+    # print("buffer_size=100", file=out_file)
+    # print("events=PROCESS_LOG", file=out_file)
+    # print("result_handler=supervisor_stdout:event_handler", file=out_file)
+    # print("", file=out_file)
 
     # MQTT
     mqtt_settings = {
@@ -39,7 +50,7 @@ def profile_to_conf(
     remote_mqtt = profile.get("mqtt.enabled", False)
     if remote_mqtt:
         # Use external broker
-        mqtt_usernmae = str(profile.get("mqtt.username", "")).strip()
+        mqtt_username = str(profile.get("mqtt.username", "")).strip()
         mqtt_password = str(profile.get("mqtt.password", "")).strip()
 
         if mqtt_username:
@@ -47,25 +58,11 @@ def profile_to_conf(
             mqtt_settings["mqtt_username"] = mqtt_username
             mqtt_settings["mqtt_password"] = mqtt_password
     else:
-        # Use internal broker (hbmqtt) on custom port
-        assert hbmqtt_conf_path, "Need hbmqtt configuration path"
-
-        # Write hbmqtt YAML configuration file
-        with open(hbmqtt_conf_path, "w") as hbmqtt_file:
-            print("listeners:", file=hbmqtt_file)
-            print("    default:", file=hbmqtt_file)
-            print("        type: tcp", file=hbmqtt_file)
-            print(f"        bind: 127.0.0.1:{local_mqtt_port}", file=hbmqtt_file)
-            print("auth:", file=hbmqtt_file)
-            print("    allow-anonymous: true", file=hbmqtt_file)
-            print("topic-check:", file=hbmqtt_file)
-            print("    enabled: false", file=hbmqtt_file)
-
+        # Use internal broker (mosquitto) on custom port
+        mqtt_settings["mqtt_host"] = "localhost"
         mqtt_settings["mqtt_port"] = local_mqtt_port
-        print_hbmqtt(
+        print_mqtt(
             out_file,
-            hbmqtt_conf_path,
-            mqtt_host=mqtt_settings["mqtt_host"],
             mqtt_port=mqtt_settings["mqtt_port"],
         )
         write_boilerplate()
@@ -73,8 +70,8 @@ def profile_to_conf(
     # -------------------------------------------------------------------------
 
     # Web Interface
-    print_webserver(profile, out_file, **mqtt_settings)
-    write_boilerplate()
+    # print_webserver(profile, out_file, **mqtt_settings)
+    # write_boilerplate()
 
     # Microphone
     mic_system = profile.get("microphone.system", "dummy")
@@ -136,11 +133,11 @@ def profile_to_conf(
 # -----------------------------------------------------------------------------
 
 
-def print_hbmqtt(
-    out_file: typing.TextIO, hbmqtt_conf_path: Path, mqtt_host: str, mqtt_port: int
+def print_mqtt(
+    out_file: typing.TextIO, mqtt_port: int
 ):
-    """Print command for internal MQTT broker (hbmqtt)"""
-    mqtt_command = ["hbmqtt", "-c", str(hbmqtt_conf_path)]
+    """Print command for internal MQTT broker"""
+    mqtt_command = ["mosquitto", "-p", str(mqtt_port)]
 
     print("[program:mqtt]", file=out_file)
     print("command=", " ".join(mqtt_command), sep="", file=out_file)
