@@ -77,7 +77,7 @@ def profile_to_conf(
 
     # Wake Word
     wake_system = profile.get("wake.system", "dummy")
-    if mic_system not in ["dummy", "hermes"]:
+    if wake_system not in ["dummy", "hermes"]:
         print_wake(wake_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
     else:
