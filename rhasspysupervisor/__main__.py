@@ -5,7 +5,7 @@ from pathlib import Path
 
 from rhasspyprofile import Profile
 
-from . import profile_to_conf
+from . import profile_to_conf, profile_to_docker
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,6 +30,11 @@ def main():
         "--supervisord-conf",
         default="supervisord.conf",
         help="Name of supervisord configuration file to write in profile (default: supervisord.conf)",
+    )
+    parser.add_argument(
+        "--docker-compose",
+        default="docker-compose.yml",
+        help="Name of docker-compose YAML file to write in profile (default: docker-compose.yml)",
     )
     parser.add_argument(
         "--local-mqtt-port",
@@ -70,6 +75,14 @@ def main():
         profile_to_conf(profile, conf_file, local_mqtt_port=args.local_mqtt_port)
 
     _LOGGER.debug("Wrote %s", str(supervisord_conf_path))
+
+    # Convert to docker compose
+    docker_compose_path = args.user_profiles / args.profile / args.docker_compose
+
+    with open(docker_compose_path, "w") as yml_file:
+        profile_to_docker(profile, yml_file, local_mqtt_port=args.local_mqtt_port)
+
+    _LOGGER.debug("Wrote %s", str(docker_compose_path))
 
 
 # -----------------------------------------------------------------------------
