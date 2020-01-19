@@ -380,6 +380,26 @@ def print_speech_to_text(
             "--language-model",
             shlex.quote(str(profile.read_path(language_model))),
         ]
+
+        base_dictionary = profile.get("speech_to_text.pocketsphinx.base_dictionary")
+        if base_dictionary:
+            stt_command.extend(
+                [
+                    "--base-dictionary",
+                    shlex.quote(str(profile.read_path(base_dictionary))),
+                ]
+            )
+
+        custom_words = profile.get("speech_to_text.pocketsphinx.custom_words")
+        if custom_words:
+            stt_command.extend(
+                ["--base-dictionary", shlex.quote(str(profile.read_path(custom_words)))]
+            )
+
+        graph = profile.get("intent.fsticuffs.intent_graph")
+        if graph:
+            stt_command.extend(["--graph", shlex.quote(str(profile.read_path(graph)))])
+
     elif stt_system == "kaldi":
         # Kaldi
         model_dir = profile.get("speech_to_text.kaldi.model_dir")
@@ -430,6 +450,10 @@ def print_intent_recognition(
     graph = profile.get("intent.fsticuffs.intent_graph")
     assert graph
 
+    # TODO: sentences_dir
+    sentences_ini = profile.get("speech_to_text.sentences_ini")
+    assert sentences_ini
+
     # TODO: Add fuzzy argument
     intent_command = [
         "rhasspy-nlu-hermes",
@@ -442,6 +466,8 @@ def print_intent_recognition(
         str(mqtt_port),
         "--graph",
         shlex.quote(str(profile.read_path(graph))),
+        "--sentences",
+        shlex.quote(str(profile.read_path(sentences_ini))),
     ]
 
     print("[program:intent_recognition]", file=out_file)
@@ -1008,6 +1034,10 @@ def compose_intent_recognition(
     graph = profile.get("intent.fsticuffs.intent_graph")
     assert graph
 
+    # TODO: sentences_dir
+    sentences_ini = profile.get("speech_to_text.sentences_ini")
+    assert sentences_ini
+
     # TODO: Add fuzzy argument
     intent_command = [
         "--debug",
@@ -1019,6 +1049,8 @@ def compose_intent_recognition(
         str(mqtt_port),
         "--graph",
         shlex.quote(str(profile.read_path(graph))),
+        "--sentences",
+        shlex.quote(str(profile.read_path(sentences_ini))),
     ]
 
     services["intent_recognition"] = {
