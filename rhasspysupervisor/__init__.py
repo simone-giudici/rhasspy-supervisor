@@ -3,8 +3,8 @@ import logging
 import shlex
 import typing
 
-from rhasspyprofile import Profile
 import yaml
+from rhasspyprofile import Profile
 
 _LOGGER = logging.getLogger(__name__)
 
