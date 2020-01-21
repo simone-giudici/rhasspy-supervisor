@@ -52,7 +52,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
         # Use internal broker (mosquitto) on custom port
         mqtt_settings["mqtt_host"] = "localhost"
         mqtt_settings["mqtt_port"] = local_mqtt_port
-        print_mqtt(out_file, mqtt_port=mqtt_settings["mqtt_port"])
+        print_mqtt(out_file, mqtt_port=local_mqtt_port)
         write_boilerplate()
 
     # -------------------------------------------------------------------------
@@ -589,7 +589,8 @@ def print_speakers(
 
 
 def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port=12183):
-    services = {}
+    """Transform Rhasspy profile to docker-compose.yml"""
+    services: typing.Dict[str, typing.Any] = {}
 
     # MQTT
     mqtt_settings = {
@@ -612,7 +613,7 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
         # Use internal broker (mosquitto) on custom port
         mqtt_settings["mqtt_host"] = "mqtt"
         mqtt_settings["mqtt_port"] = local_mqtt_port
-        compose_mqtt(services, mqtt_port=mqtt_settings["mqtt_port"])
+        compose_mqtt(services, mqtt_port=local_mqtt_port)
 
     # -------------------------------------------------------------------------
 
@@ -681,8 +682,6 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
 
 def compose_mqtt(services: typing.Dict[str, typing.Any], mqtt_port: int):
     """Print command for internal MQTT broker"""
-    mqtt_command = ["mosquitto"]
-
     services["mqtt"] = {
         "image": "eclipse-mosquitto",
         "entrypoint": "mosquitto",
