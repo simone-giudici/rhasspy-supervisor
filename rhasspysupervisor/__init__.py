@@ -367,6 +367,7 @@ def print_speech_to_text(
         stt_command = [
             "rhasspy-asr-pocketsphinx-hermes",
             "--debug",
+            "run",
             "--siteId",
             str(siteId),
             "--host",
@@ -396,9 +397,29 @@ def print_speech_to_text(
                 ["--base-dictionary", shlex.quote(str(profile.read_path(custom_words)))]
             )
 
+        # Case transformation for dictionary word
+        dictionary_casing = profile.get("speech_to_text.dictionary_casing")
+        if dictionary_casing:
+            stt_command.extend(["--dictionary-casing", dictionary_casing])
+
+        # Grapheme-to-phoneme model
+        g2p_model = profile.get("speech_to_text.pocketsphinx.g2p_model")
+        if g2p_model:
+            stt_command.extend(
+                ["--g2p-model", shlex.quote(str(profile.read_path(g2p_model)))]
+            )
+
+        # Case transformation for grapheme-to-phoneme model
+        g2p_casing = profile.get("speech_to_text.g2p_casing")
+        if g2p_casing:
+            stt_command.extend(["--g2p-casing", g2p_casing])
+
+        # Intent JSON graph
         graph = profile.get("intent.fsticuffs.intent_graph")
         if graph:
-            stt_command.extend(["--graph", shlex.quote(str(profile.read_path(graph)))])
+            stt_command.extend(
+                ["--intent-graph", shlex.quote(str(profile.read_path(graph)))]
+            )
 
     elif stt_system == "kaldi":
         # Kaldi
@@ -413,6 +434,7 @@ def print_speech_to_text(
         stt_command = [
             "rhasspy-asr-kaldi-hermes",
             "--debug",
+            "run",
             "--siteId",
             str(siteId),
             "--host",
@@ -958,6 +980,7 @@ def compose_speech_to_text(
 
         stt_command = [
             "--debug",
+            "run",
             "--siteId",
             str(siteId),
             "--host",
