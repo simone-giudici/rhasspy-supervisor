@@ -59,7 +59,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
 
     # Microphone
     mic_system = profile.get("microphone.system", "dummy")
-    if mic_system not in ["dummy", "hermes"]:
+    if mic_system not in {"dummy", "hermes"}:
         print_microphone(mic_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
     else:
@@ -67,7 +67,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
 
     # Speakers
     sound_system = profile.get("sounds.system", "dummy")
-    if sound_system not in ["dummy", "hermes"]:
+    if sound_system not in {"dummy", "hermes"}:
         print_speakers(sound_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
     else:
@@ -75,7 +75,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
 
     # Wake Word
     wake_system = profile.get("wake.system", "dummy")
-    if wake_system not in ["dummy", "hermes"]:
+    if wake_system not in {"dummy", "hermes"}:
         print_wake(wake_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
     else:
@@ -646,21 +646,21 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
 
     # Microphone
     mic_system = profile.get("microphone.system", "dummy")
-    if mic_system not in ["dummy", "hermes"]:
+    if mic_system not in {"dummy", "hermes"}:
         compose_microphone(mic_system, profile, services, **mqtt_settings)
     else:
         _LOGGER.debug("Microphone disabled (system=%s)", mic_system)
 
     # Speakers
     sound_system = profile.get("sounds.system", "dummy")
-    if sound_system not in ["dummy", "hermes"]:
+    if sound_system not in {"dummy", "hermes"}:
         compose_speakers(sound_system, profile, services, **mqtt_settings)
     else:
         _LOGGER.debug("Speakers disabled (system=%s)", sound_system)
 
     # Wake Word
     wake_system = profile.get("wake.system", "dummy")
-    if wake_system not in ["dummy", "hermes"]:
+    if wake_system not in {"dummy", "hermes"}:
         compose_wake(wake_system, profile, services, **mqtt_settings)
     else:
         _LOGGER.debug("Wake word disabled (system=%s)", wake_system)
