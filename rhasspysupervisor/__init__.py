@@ -252,7 +252,8 @@ def print_wake(
     assert wake_system in [
         "porcupine",
         "snowboy",
-    ], "Only porcupine/snowboy are supported for wake.system"
+        "pocketsphinx",
+    ], "Only porcupine/snowboy/pocketsphinx are supported for wake.system"
 
     if wake_system == "porcupine":
         library = profile.get("wake.porcupine.library_path")
@@ -329,6 +330,41 @@ def print_wake(
                 str(settings["apply_frontend"]),
             ]
             wake_command.extend(["--model"] + model_args)
+    elif wake_system == "pocketsphinx":
+        # Load decoder settings (use speech-to-text configuration as a fallback)
+        acoustic_model = profile.get("wake.pocketsphinx.acoustic_model") or profile.get(
+            "speech_to_text.pocketsphinx.acoustic_model"
+        )
+        assert acoustic_model
+
+        dictionary = profile.get("wake.pocketsphinx.dictionary") or profile.get(
+            "speech_to_text.pocketsphinx.dictionary"
+        )
+
+        wake_command = [
+            "rhasspy-wake-pocketsphinx-hermes",
+            "--debug",
+            "--keyphrase",
+            str(profile.get("wake.pocketsphinx.keyphrase", "okay raspy")),
+            "--keyphrase-threshold",
+            str(profile.get("wake.pocketsphinx.threshold", "1e-40")),
+            "--acoustic-model",
+            shlex.quote(profile.read_path(acoustic_model)),
+            "--dictionary",
+            shlex.quote(profile.read_path(dictionary)),
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+        ]
+
+        mllr_matrix = profile.get("wake.pocketsphinx.mllr_matrix")
+        if mllr_matrix:
+            wake_command.extend(
+                ["--mllr-matrix", shlex.quote(profile.read_path(mllr_matrix))]
+            )
 
     print("[program:wake_word]", file=out_file)
     print("command=", " ".join(wake_command), sep="", file=out_file)
@@ -855,7 +891,8 @@ def compose_wake(
     assert wake_system in [
         "porcupine",
         "snowboy",
-    ], "Only porcupine/snowboy are supported for wake.system"
+        "pocketsphinx",
+    ], "Only porcupine/snowboy/pocketsphinx are supported for wake.system"
 
     if wake_system == "porcupine":
         library = profile.get("wake.porcupine.library_path")
@@ -938,6 +975,48 @@ def compose_wake(
                 str(settings["apply_frontend"]),
             ]
             wake_command.extend(["--model"] + model_args)
+
+        services["wake"] = {
+            "image": "rhasspy/rhasspy-wake-snowboy-hermes",
+            "command": " ".join(wake_command),
+            "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
+            "depends_on": ["mqtt"],
+            "tty": True,
+        }
+    elif wake_system == "pocketsphinx":
+        # Load decoder settings (use speech-to-text configuration as a fallback)
+        acoustic_model = profile.get("wake.pocketsphinx.acoustic_model") or profile.get(
+            "speech_to_text.pocketsphinx.acoustic_model"
+        )
+        assert acoustic_model
+
+        dictionary = profile.get("wake.pocketsphinx.dictionary") or profile.get(
+            "speech_to_text.pocketsphinx.dictionary"
+        )
+
+        wake_command = [
+            "--debug",
+            "--keyphrase",
+            str(profile.get("wake.pocketsphinx.keyphrase", "okay raspy")),
+            "--keyphrase-threshold",
+            str(profile.get("wake.pocketsphinx.threshold", "1e-40")),
+            "--acoustic-model",
+            shlex.quote(profile.read_path(acoustic_model)),
+            "--dictionary",
+            shlex.quote(profile.read_path(dictionary)),
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+        ]
+
+        mllr_matrix = profile.get("wake.pocketsphinx.mllr_matrix")
+        if mllr_matrix:
+            wake_command.extend(
+                ["--mllr-matrix", shlex.quote(profile.read_path(mllr_matrix))]
+            )
 
         services["wake"] = {
             "image": "rhasspy/rhasspy-wake-snowboy-hermes",
