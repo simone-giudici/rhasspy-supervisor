@@ -187,6 +187,8 @@ def print_microphone(
             "-t",
             "raw",
         ]
+        list_command = ["arecord", "-L"]
+
         mic_device = profile.get("microphone.arecord.device", "").strip()
         if mic_device:
             record_command.extend(["-D", str(mic_device)])
@@ -208,6 +210,8 @@ def print_microphone(
             "1",
             "--record-command",
             shlex.quote(" ".join(record_command)),
+            "--list-command",
+            shlex.quote(" ".join(list_command)),
         ]
     elif mic_system == "pyaudio":
         mic_command = [
@@ -522,10 +526,8 @@ def print_intent_recognition(
         str(mqtt_host),
         "--port",
         str(mqtt_port),
-        "--graph",
+        "--intent-graph",
         shlex.quote(str(profile.read_path(graph))),
-        "--sentences",
-        shlex.quote(str(profile.read_path(sentences_ini))),
     ]
 
     print("[program:intent_recognition]", file=out_file)
@@ -815,6 +817,8 @@ def compose_microphone(
             "-t",
             "raw",
         ]
+        list_command = ["arecord", "-L"]
+
         mic_device = profile.get("microphone.arecord.device", "").strip()
         if mic_device:
             record_command.extend(["-D", str(mic_device)])
@@ -835,6 +839,8 @@ def compose_microphone(
             "1",
             "--record-command",
             shlex.quote(" ".join(record_command)),
+            "--list-command",
+            shlex.quote(" ".join(list_command)),
         ]
 
         services["microphone"] = {
@@ -1148,10 +1154,8 @@ def compose_intent_recognition(
         str(mqtt_host),
         "--port",
         str(mqtt_port),
-        "--graph",
+        "--intent-graph",
         shlex.quote(str(profile.read_path(graph))),
-        "--sentences",
-        shlex.quote(str(profile.read_path(sentences_ini))),
     ]
 
     services["intent_recognition"] = {
