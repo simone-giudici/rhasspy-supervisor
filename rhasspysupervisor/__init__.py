@@ -188,6 +188,7 @@ def print_microphone(
             "raw",
         ]
         list_command = ["arecord", "-L"]
+        test_command = "arecord -q -D {} -r 16000 -f S16_LE -c 1 -t raw"
 
         mic_device = profile.get("microphone.arecord.device", "").strip()
         if mic_device:
@@ -212,6 +213,8 @@ def print_microphone(
             shlex.quote(" ".join(record_command)),
             "--list-command",
             shlex.quote(" ".join(list_command)),
+            "--test-command",
+            shlex.quote(test_command),
         ]
     elif mic_system == "pyaudio":
         mic_command = [
@@ -353,9 +356,9 @@ def print_wake(
             "--keyphrase-threshold",
             str(profile.get("wake.pocketsphinx.threshold", "1e-40")),
             "--acoustic-model",
-            shlex.quote(profile.read_path(acoustic_model)),
+            shlex.quote(str(profile.read_path(acoustic_model))),
             "--dictionary",
-            shlex.quote(profile.read_path(dictionary)),
+            shlex.quote(str(profile.read_path(dictionary))),
             "--siteId",
             str(siteId),
             "--host",
@@ -367,7 +370,7 @@ def print_wake(
         mllr_matrix = profile.get("wake.pocketsphinx.mllr_matrix")
         if mllr_matrix:
             wake_command.extend(
-                ["--mllr-matrix", shlex.quote(profile.read_path(mllr_matrix))]
+                ["--mllr-matrix", shlex.quote(str(profile.read_path(mllr_matrix)))]
             )
 
     print("[program:wake_word]", file=out_file)
@@ -622,11 +625,12 @@ def print_speakers(
     assert sound_system in ["aplay"], "Only aplay is supported for sounds.system"
 
     play_command = ["aplay", "-q", "-t", "wav"]
+    list_command = ["aplay", "-L"]
     sound_device = profile.get("sounds.arecord.device", "").strip()
     if sound_device:
         play_command.extend(["-D", str(sound_device)])
 
-    play_command = [
+    output_command = [
         "rhasspy-speakers-cli-hermes",
         "--debug",
         "--siteId",
@@ -637,10 +641,12 @@ def print_speakers(
         str(mqtt_port),
         "--play-command",
         shlex.quote(" ".join(play_command)),
+        "--list-command",
+        shlex.quote(" ".join(list_command)),
     ]
 
     print("[program:speakers]", file=out_file)
-    print("command=", " ".join(play_command), sep="", file=out_file)
+    print("command=", " ".join(output_command), sep="", file=out_file)
 
 
 # -----------------------------------------------------------------------------
@@ -818,6 +824,7 @@ def compose_microphone(
             "raw",
         ]
         list_command = ["arecord", "-L"]
+        test_command = "arecord -q -D {} -r 16000 -f S16_LE -c 1 -t raw"
 
         mic_device = profile.get("microphone.arecord.device", "").strip()
         if mic_device:
@@ -841,6 +848,8 @@ def compose_microphone(
             shlex.quote(" ".join(record_command)),
             "--list-command",
             shlex.quote(" ".join(list_command)),
+            "--test-command",
+            shlex.quote(test_command),
         ]
 
         services["microphone"] = {
@@ -1007,9 +1016,9 @@ def compose_wake(
             "--keyphrase-threshold",
             str(profile.get("wake.pocketsphinx.threshold", "1e-40")),
             "--acoustic-model",
-            shlex.quote(profile.read_path(acoustic_model)),
+            shlex.quote(str(profile.read_path(acoustic_model))),
             "--dictionary",
-            shlex.quote(profile.read_path(dictionary)),
+            shlex.quote(str(profile.read_path(dictionary))),
             "--siteId",
             str(siteId),
             "--host",
@@ -1021,7 +1030,7 @@ def compose_wake(
         mllr_matrix = profile.get("wake.pocketsphinx.mllr_matrix")
         if mllr_matrix:
             wake_command.extend(
-                ["--mllr-matrix", shlex.quote(profile.read_path(mllr_matrix))]
+                ["--mllr-matrix", shlex.quote(str(profile.read_path(mllr_matrix)))]
             )
 
         services["wake"] = {
@@ -1261,11 +1270,12 @@ def compose_speakers(
     assert sound_system in ["aplay"], "Only aplay is supported for sounds.system"
 
     play_command = ["aplay", "-q", "-t", "wav"]
+    list_command = ["aplay", "-L"]
     sound_device = profile.get("sounds.arecord.device", "").strip()
     if sound_device:
         play_command.extend(["-D", str(sound_device)])
 
-    play_command = [
+    output_command = [
         "--debug",
         "--siteId",
         str(siteId),
@@ -1275,11 +1285,13 @@ def compose_speakers(
         str(mqtt_port),
         "--play-command",
         shlex.quote(" ".join(play_command)),
+        "--list-command",
+        shlex.quote(" ".join(list_command)),
     ]
 
     services["speakers"] = {
         "image": "rhasspy/rhasspy-speakers-cli-hermes",
-        "command": " ".join(play_command),
+        "command": " ".join(output_command),
         "devices": ["/dev/snd"],
         "depends_on": ["mqtt"],
         "tty": True,
