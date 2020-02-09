@@ -457,13 +457,6 @@ def print_speech_to_text(
         if g2p_casing:
             stt_command.extend(["--g2p-casing", g2p_casing])
 
-        # Intent JSON graph
-        graph = profile.get("intent.fsticuffs.intent_graph")
-        if graph:
-            stt_command.extend(
-                ["--intent-graph", shlex.quote(str(profile.read_path(graph)))]
-            )
-
     elif stt_system == "kaldi":
         # Kaldi
         model_dir = profile.get("speech_to_text.kaldi.model_dir")
@@ -477,7 +470,6 @@ def print_speech_to_text(
         stt_command = [
             "rhasspy-asr-kaldi-hermes",
             "--debug",
-            "run",
             "--siteId",
             str(siteId),
             "--host",
@@ -489,6 +481,38 @@ def print_speech_to_text(
             "--graph-dir",
             shlex.quote(str(graph)),
         ]
+
+        base_dictionary = profile.get("speech_to_text.kaldi.base_dictionary")
+        if base_dictionary:
+            stt_command.extend(
+                [
+                    "--base-dictionary",
+                    shlex.quote(str(profile.read_path(base_dictionary))),
+                ]
+            )
+
+        custom_words = profile.get("speech_to_text.kaldi.custom_words")
+        if custom_words:
+            stt_command.extend(
+                ["--base-dictionary", shlex.quote(str(profile.read_path(custom_words)))]
+            )
+
+        # Case transformation for dictionary word
+        dictionary_casing = profile.get("speech_to_text.dictionary_casing")
+        if dictionary_casing:
+            stt_command.extend(["--dictionary-casing", dictionary_casing])
+
+        # Grapheme-to-phoneme model
+        g2p_model = profile.get("speech_to_text.kaldi.g2p_model")
+        if g2p_model:
+            stt_command.extend(
+                ["--g2p-model", shlex.quote(str(profile.read_path(g2p_model)))]
+            )
+
+        # Case transformation for grapheme-to-phoneme model
+        g2p_casing = profile.get("speech_to_text.g2p_casing")
+        if g2p_casing:
+            stt_command.extend(["--g2p-casing", g2p_casing])
 
     print("[program:speech_to_text]", file=out_file)
     print("command=", " ".join(stt_command), sep="", file=out_file)
@@ -1089,6 +1113,38 @@ def compose_speech_to_text(
             shlex.quote(str(profile.read_path(language_model))),
         ]
 
+        base_dictionary = profile.get("speech_to_text.pocketsphinx.base_dictionary")
+        if base_dictionary:
+            stt_command.extend(
+                [
+                    "--base-dictionary",
+                    shlex.quote(str(profile.read_path(base_dictionary))),
+                ]
+            )
+
+        custom_words = profile.get("speech_to_text.pocketsphinx.custom_words")
+        if custom_words:
+            stt_command.extend(
+                ["--base-dictionary", shlex.quote(str(profile.read_path(custom_words)))]
+            )
+
+        # Case transformation for dictionary word
+        dictionary_casing = profile.get("speech_to_text.dictionary_casing")
+        if dictionary_casing:
+            stt_command.extend(["--dictionary-casing", dictionary_casing])
+
+        # Grapheme-to-phoneme model
+        g2p_model = profile.get("speech_to_text.pocketsphinx.g2p_model")
+        if g2p_model:
+            stt_command.extend(
+                ["--g2p-model", shlex.quote(str(profile.read_path(g2p_model)))]
+            )
+
+        # Case transformation for grapheme-to-phoneme model
+        g2p_casing = profile.get("speech_to_text.g2p_casing")
+        if g2p_casing:
+            stt_command.extend(["--g2p-casing", g2p_casing])
+
         services["speech_to_text"] = {
             "image": "rhasspy/rhasspy-asr-pocketsphinx-hermes",
             "command": " ".join(stt_command),
@@ -1119,6 +1175,38 @@ def compose_speech_to_text(
             "--graph-dir",
             shlex.quote(str(graph)),
         ]
+
+        base_dictionary = profile.get("speech_to_text.kaldi.base_dictionary")
+        if base_dictionary:
+            stt_command.extend(
+                [
+                    "--base-dictionary",
+                    shlex.quote(str(profile.read_path(base_dictionary))),
+                ]
+            )
+
+        custom_words = profile.get("speech_to_text.kaldi.custom_words")
+        if custom_words:
+            stt_command.extend(
+                ["--base-dictionary", shlex.quote(str(profile.read_path(custom_words)))]
+            )
+
+        # Case transformation for dictionary word
+        dictionary_casing = profile.get("speech_to_text.dictionary_casing")
+        if dictionary_casing:
+            stt_command.extend(["--dictionary-casing", dictionary_casing])
+
+        # Grapheme-to-phoneme model
+        g2p_model = profile.get("speech_to_text.kaldi.g2p_model")
+        if g2p_model:
+            stt_command.extend(
+                ["--g2p-model", shlex.quote(str(profile.read_path(g2p_model)))]
+            )
+
+        # Case transformation for grapheme-to-phoneme model
+        g2p_casing = profile.get("speech_to_text.g2p_casing")
+        if g2p_casing:
+            stt_command.extend(["--g2p-casing", g2p_casing])
 
         services["speech_to_text"] = {
             "image": "rhasspy/rhasspy-asr-kaldi-hermes",
