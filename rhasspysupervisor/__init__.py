@@ -382,20 +382,14 @@ def print_wake(
 # TODO: Add support for remote
 
 
-def print_speech_to_text(
+def get_speech_to_text(
     stt_system: str,
     profile: Profile,
-    out_file: typing.TextIO,
     siteId: str = "default",
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
-):
-    """Print command for speech to text system"""
-    assert stt_system in [
-        "pocketsphinx",
-        "kaldi",
-    ], "Only pocketsphinx/kaldi are supported for speech_to_text.system"
-
+) -> typing.List[str]:
+    """Get command for speech to text system"""
     if stt_system == "pocketsphinx":
         # Pocketsphinx
         acoustic_model = profile.get("speech_to_text.pocketsphinx.acoustic_model")
@@ -410,7 +404,6 @@ def print_speech_to_text(
         stt_command = [
             "rhasspy-asr-pocketsphinx-hermes",
             "--debug",
-            "run",
             "--siteId",
             str(siteId),
             "--host",
@@ -430,14 +423,17 @@ def print_speech_to_text(
             stt_command.extend(
                 [
                     "--base-dictionary",
-                    shlex.quote(str(profile.read_path(base_dictionary))),
+                    shlex.quote(str(profile.write_path(base_dictionary))),
                 ]
             )
 
         custom_words = profile.get("speech_to_text.pocketsphinx.custom_words")
         if custom_words:
             stt_command.extend(
-                ["--base-dictionary", shlex.quote(str(profile.read_path(custom_words)))]
+                [
+                    "--base-dictionary",
+                    shlex.quote(str(profile.write_path(custom_words))),
+                ]
             )
 
         # Case transformation for dictionary word
@@ -449,7 +445,7 @@ def print_speech_to_text(
         g2p_model = profile.get("speech_to_text.pocketsphinx.g2p_model")
         if g2p_model:
             stt_command.extend(
-                ["--g2p-model", shlex.quote(str(profile.read_path(g2p_model)))]
+                ["--g2p-model", shlex.quote(str(profile.write_path(g2p_model)))]
             )
 
         # Case transformation for grapheme-to-phoneme model
@@ -457,11 +453,13 @@ def print_speech_to_text(
         if g2p_casing:
             stt_command.extend(["--g2p-casing", g2p_casing])
 
-    elif stt_system == "kaldi":
+        return stt_command
+
+    if stt_system == "kaldi":
         # Kaldi
         model_dir = profile.get("speech_to_text.kaldi.model_dir")
         assert model_dir
-        model_dir = profile.read_path(model_dir)
+        model_dir = profile.write_path(model_dir)
 
         graph = profile.get("speech_to_text.kaldi.graph")
         assert graph
@@ -487,14 +485,17 @@ def print_speech_to_text(
             stt_command.extend(
                 [
                     "--base-dictionary",
-                    shlex.quote(str(profile.read_path(base_dictionary))),
+                    shlex.quote(str(profile.write_path(base_dictionary))),
                 ]
             )
 
         custom_words = profile.get("speech_to_text.kaldi.custom_words")
         if custom_words:
             stt_command.extend(
-                ["--base-dictionary", shlex.quote(str(profile.read_path(custom_words)))]
+                [
+                    "--base-dictionary",
+                    shlex.quote(str(profile.write_path(custom_words))),
+                ]
             )
 
         # Case transformation for dictionary word
@@ -506,7 +507,7 @@ def print_speech_to_text(
         g2p_model = profile.get("speech_to_text.kaldi.g2p_model")
         if g2p_model:
             stt_command.extend(
-                ["--g2p-model", shlex.quote(str(profile.read_path(g2p_model)))]
+                ["--g2p-model", shlex.quote(str(profile.write_path(g2p_model)))]
             )
 
         # Case transformation for grapheme-to-phoneme model
@@ -514,13 +515,235 @@ def print_speech_to_text(
         if g2p_casing:
             stt_command.extend(["--g2p-casing", g2p_casing])
 
+        return stt_command
+
+    if stt_system == "command":
+        user_program = profile.get("speech_to_text.command.program")
+        assert user_program, "speech_to_text.command.program is required"
+        user_command = [user_program] + profile.get(
+            "speech_to_text.command.arguments", []
+        )
+
+        stt_command = [
+            "rhasspy-remote-http-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--asr-command",
+            shlex.quote(" ".join(str(v) for v in user_command)),
+        ]
+
+        # Training
+        stt_train_system = profile.get("training.speech_to_text.system", "auto")
+        if stt_train_system == "auto":
+            train_url = profile.get("training.speech_to_text.remote.url")
+            if train_url:
+                stt_command.extend(["--asr-train-url", shlex.quote(train_url)])
+            else:
+                _LOGGER.warning("No speech to text training URL was provided")
+
+        return stt_command
+
+    if stt_system == "remote":
+        url = profile.get("speech_to_text.remote.url")
+        assert url, "speech_to_text.remote.url is required"
+
+        stt_command = [
+            "rhasspy-remote-http-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--asr-url",
+            shlex.quote(url),
+        ]
+
+        # Training
+        stt_train_system = profile.get("training.speech_to_text.system", "auto")
+        if stt_train_system == "auto":
+            train_program = profile.get("training.speech_to_text.command.program")
+            if train_program:
+                train_command = [train_program] + profile.get(
+                    "training.speech_to_text.command.arguments", []
+                )
+                stt_command.extend(
+                    [
+                        "--asr-train-command",
+                        shlex.quote(" ".join(str(v) for v in train_command)),
+                    ]
+                )
+            else:
+                _LOGGER.warning("No speech to text training command was provided")
+
+        return stt_command
+
+    raise ValueError(f"Unsupported speech to text system (got {stt_system})")
+
+
+def print_speech_to_text(
+    stt_system: str,
+    profile: Profile,
+    out_file: typing.TextIO,
+    siteId: str = "default",
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+):
+    """Print command for speech to text system"""
+    stt_command = get_speech_to_text(
+        stt_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
     print("[program:speech_to_text]", file=out_file)
     print("command=", " ".join(stt_command), sep="", file=out_file)
 
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for remote, fuzzywuzzy, adapt, rasaNLU, flair
+# TODO: Add support for adapt, rasaNLU, flair
+
+
+def get_intent_recognition(
+    intent_system: str,
+    profile: Profile,
+    siteId: str = "default",
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+) -> typing.List[str]:
+    """Get command for intent recognition system"""
+    dictionary_casing = profile.get("speech_to_text.dictionary_casing")
+
+    if intent_system == "fsticuffs":
+        graph = profile.get("intent.fsticuffs.intent_graph")
+        assert graph, "Intent graph is required"
+
+        # TODO: Add fuzzy argument
+        intent_command = [
+            "rhasspy-nlu-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--intent-graph",
+            shlex.quote(str(profile.write_path(graph))),
+        ]
+
+        # Case transformation
+        if dictionary_casing:
+            intent_command.extend(["--casing", dictionary_casing])
+
+        return intent_command
+
+    if intent_system == "fuzzywuzzy":
+        graph = profile.get("intent.fsticuffs.intent_graph")
+        assert graph, "Intent graph is required"
+
+        examples = profile.get("intent.fuzzywuzzy.examples_json")
+        assert examples, "Examples JSON is required"
+
+        intent_command = [
+            "rhasspy-fuzzywuzzy-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--intent-graph",
+            shlex.quote(str(profile.write_path(graph))),
+            "--examples",
+            shlex.quote(str(profile.write_path(examples))),
+        ]
+
+        # Case transformation
+        if dictionary_casing:
+            intent_command.extend(["--casing", dictionary_casing])
+
+        return intent_command
+
+    if intent_system == "command":
+        user_program = profile.get("intent.command.program")
+        assert user_program
+        user_command = [user_program] + profile.get("intent.command.arguments", [])
+
+        intent_command = [
+            "rhasspy-remote-http-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--nlu-command",
+            shlex.quote(" ".join(str(v) for v in user_command)),
+        ]
+
+        # Case transformation
+        if dictionary_casing:
+            intent_command.extend(["--casing", dictionary_casing])
+
+        # Training
+        intent_train_system = profile.get("training.intent.system", "auto")
+        if intent_train_system == "auto":
+            train_program = profile.get("training.intent.command.program")
+            if train_program:
+                train_command = [train_program] + profile.get(
+                    "training.intent.command.arguments", []
+                )
+                intent_command.extend(
+                    [
+                        "--nlu-train-command",
+                        shlex.quote(" ".join(str(v) for v in train_command)),
+                    ]
+                )
+            else:
+                _LOGGER.warning("No intent training command was provided")
+
+        return intent_command
+
+    if intent_system == "remote":
+        url = profile.get("intent.remote.url")
+        assert url, "intent.remote.url is required"
+
+        intent_command = [
+            "rhasspy-remote-http-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--nlu-url",
+            shlex.quote(url),
+        ]
+
+        # Case transformation
+        if dictionary_casing:
+            intent_command.extend(["--casing", dictionary_casing])
+
+        # Training
+        intent_train_system = profile.get("training.intent.system", "auto")
+        if intent_train_system == "auto":
+            train_url = profile.get("training.intent.remote.url")
+            if train_url:
+                intent_command.extend(["--nlu-train-url", shlex.quote(train_url)])
+            else:
+                _LOGGER.warning("No intent training URL was provided")
+
+        return intent_command
+
+    raise ValueError(f"Unsupported intent recogniton system (got {intent_system})")
 
 
 def print_intent_recognition(
@@ -532,36 +755,40 @@ def print_intent_recognition(
     mqtt_port: int = 1883,
 ):
     """Print command for intent recognition system"""
-    assert intent_system in [
-        "fsticuffs"
-    ], "Only fsticuffs is supported for intent.system"
-
-    graph = profile.get("intent.fsticuffs.intent_graph")
-    assert graph
-
-    # TODO: sentences_dir
-    sentences_ini = profile.get("speech_to_text.sentences_ini")
-    assert sentences_ini
-
-    # TODO: Add fuzzy argument
-    intent_command = [
-        "rhasspy-nlu-hermes",
-        "--debug",
-        "--siteId",
-        str(siteId),
-        "--host",
-        str(mqtt_host),
-        "--port",
-        str(mqtt_port),
-        "--intent-graph",
-        shlex.quote(str(profile.read_path(graph))),
-    ]
+    intent_command = get_intent_recognition(
+        intent_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
 
     print("[program:intent_recognition]", file=out_file)
     print("command=", " ".join(intent_command), sep="", file=out_file)
 
 
 # -----------------------------------------------------------------------------
+
+
+def get_dialogue(
+    dialogue_system: str,
+    profile: Profile,
+    siteId: str = "default",
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+) -> typing.List[str]:
+    """Get command for dialogue management system"""
+    if dialogue_system == "hermes":
+        dialogue_command = [
+            "rhasspy-dialogue-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+        ]
+
+        return dialogue_command
+
+    raise ValueError(f"Unsupported dialogue system (got {dialogue_system})")
 
 
 def print_dialogue(
@@ -573,18 +800,13 @@ def print_dialogue(
     mqtt_port: int = 1883,
 ):
     """Print command for dialogue management system"""
-    assert dialogue_system in ["hermes"], "Only hermes is supported for dialogue.system"
-
-    dialogue_command = [
-        "rhasspy-dialogue-hermes",
-        "--debug",
-        "--siteId",
-        str(siteId),
-        "--host",
-        str(mqtt_host),
-        "--port",
-        str(mqtt_port),
-    ]
+    dialogue_command = get_dialogue(
+        dialogue_system,
+        profile,
+        siteId=siteId,
+        mqtt_host=mqtt_host,
+        mqtt_port=mqtt_port,
+    )
 
     print("[program:dialogue]", file=out_file)
     print("command=", " ".join(dialogue_command), sep="", file=out_file)
@@ -592,30 +814,27 @@ def print_dialogue(
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for remote, flite, picotts, MaryTTS, Google, NanoTTS
+# TODO: Add support for flite, picotts, MaryTTS, Google, NanoTTS
 
 
-def print_text_to_speech(
+def get_text_to_speech(
     tts_system: str,
     profile: Profile,
-    out_file: typing.TextIO,
     siteId: str = "default",
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
 ):
-    """Print command for text to speech system"""
-    assert tts_system in [
-        "espeak"
-    ], "Only espeak is supported for text_to_speech.system"
-
+    """Get command for text to speech system"""
     if tts_system == "espeak":
-        tts_command = ["espeak", "--stdout"]
+        espeak_command = ["espeak", "--stdout"]
         voice = profile.get("text_to_speech.espeak.voice", "").strip()
         if not voice:
             voice = profile.get("language", "").strip()
 
         if voice:
-            tts_command.extend(["-v", str(voice)])
+            espeak_command.extend(["-v", str(voice)])
+
+        espeak_command.extend(profile.get("text_to_speech.espeak.arguments", []))
 
         tts_command = [
             "rhasspy-tts-cli-hermes",
@@ -627,8 +846,69 @@ def print_text_to_speech(
             "--port",
             str(mqtt_port),
             "--tts-command",
-            shlex.quote(" ".join(tts_command)),
+            shlex.quote(" ".join(str(v) for v in espeak_command)),
         ]
+
+        return tts_command
+
+    if tts_system == "command":
+        user_program = profile.get("text_to_speech.command.program")
+        assert user_program, "text_to_speech.command.program is required"
+        user_command = [user_program] + profile.get(
+            "text_to_speech.command.arguments", []
+        )
+
+        tts_command = [
+            "rhasspy-remote-http-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--tts-command",
+            shlex.quote(" ".join(str(v) for v in user_command)),
+        ]
+
+        return tts_command
+
+    if tts_system == "remote":
+        url = profile.get("text_to_speech.remote.url")
+        assert url, "text_to_speech.remote.url is required"
+
+        tts_command = [
+            "rhasspy-remote-http-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--tts-url",
+            shlex.quote(url),
+        ]
+
+        return tts_command
+
+    raise ValueError(f"Unsupported text to speech system (got {tts_system})")
+
+    return tts_command
+
+
+def print_text_to_speech(
+    tts_system: str,
+    profile: Profile,
+    out_file: typing.TextIO,
+    siteId: str = "default",
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+):
+    """Print command for text to speech system"""
+    tts_command = get_text_to_speech(
+        tts_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
 
     print("[program:text_to_speech]", file=out_file)
     print("command=", " ".join(tts_command), sep="", file=out_file)
@@ -1068,8 +1348,6 @@ def compose_wake(
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for remote
-
 
 def compose_speech_to_text(
     stt_system: str,
@@ -1080,146 +1358,21 @@ def compose_speech_to_text(
     mqtt_port: int = 1883,
 ):
     """Print command for speech to text system"""
-    assert stt_system in [
-        "pocketsphinx",
-        "kaldi",
-    ], "Only pocketsphinx/kaldi are supported for speech_to_text.system"
+    stt_command = get_speech_to_text(
+        stt_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
+    service_name = stt_command.pop(0)
 
-    if stt_system == "pocketsphinx":
-        # Pocketsphinx
-        acoustic_model = profile.get("speech_to_text.pocketsphinx.acoustic_model")
-        assert acoustic_model
-
-        dictionary = profile.get("speech_to_text.pocketsphinx.dictionary")
-        assert dictionary
-
-        language_model = profile.get("speech_to_text.pocketsphinx.language_model")
-        assert language_model
-
-        stt_command = [
-            "--debug",
-            "run",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-            "--acoustic-model",
-            shlex.quote(str(profile.read_path(acoustic_model))),
-            "--dictionary",
-            shlex.quote(str(profile.read_path(dictionary))),
-            "--language-model",
-            shlex.quote(str(profile.read_path(language_model))),
-        ]
-
-        base_dictionary = profile.get("speech_to_text.pocketsphinx.base_dictionary")
-        if base_dictionary:
-            stt_command.extend(
-                [
-                    "--base-dictionary",
-                    shlex.quote(str(profile.read_path(base_dictionary))),
-                ]
-            )
-
-        custom_words = profile.get("speech_to_text.pocketsphinx.custom_words")
-        if custom_words:
-            stt_command.extend(
-                ["--base-dictionary", shlex.quote(str(profile.read_path(custom_words)))]
-            )
-
-        # Case transformation for dictionary word
-        dictionary_casing = profile.get("speech_to_text.dictionary_casing")
-        if dictionary_casing:
-            stt_command.extend(["--dictionary-casing", dictionary_casing])
-
-        # Grapheme-to-phoneme model
-        g2p_model = profile.get("speech_to_text.pocketsphinx.g2p_model")
-        if g2p_model:
-            stt_command.extend(
-                ["--g2p-model", shlex.quote(str(profile.read_path(g2p_model)))]
-            )
-
-        # Case transformation for grapheme-to-phoneme model
-        g2p_casing = profile.get("speech_to_text.g2p_casing")
-        if g2p_casing:
-            stt_command.extend(["--g2p-casing", g2p_casing])
-
-        services["speech_to_text"] = {
-            "image": "rhasspy/rhasspy-asr-pocketsphinx-hermes",
-            "command": " ".join(stt_command),
-            "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
-            "depends_on": ["mqtt"],
-            "tty": True,
-        }
-    elif stt_system == "kaldi":
-        # Kaldi
-        model_dir = profile.get("speech_to_text.kaldi.model_dir")
-        assert model_dir
-        model_dir = profile.read_path(model_dir)
-
-        graph = profile.get("speech_to_text.kaldi.graph")
-        assert graph
-        graph = model_dir / graph
-
-        stt_command = [
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-            "--model-dir",
-            shlex.quote(str(model_dir)),
-            "--graph-dir",
-            shlex.quote(str(graph)),
-        ]
-
-        base_dictionary = profile.get("speech_to_text.kaldi.base_dictionary")
-        if base_dictionary:
-            stt_command.extend(
-                [
-                    "--base-dictionary",
-                    shlex.quote(str(profile.read_path(base_dictionary))),
-                ]
-            )
-
-        custom_words = profile.get("speech_to_text.kaldi.custom_words")
-        if custom_words:
-            stt_command.extend(
-                ["--base-dictionary", shlex.quote(str(profile.read_path(custom_words)))]
-            )
-
-        # Case transformation for dictionary word
-        dictionary_casing = profile.get("speech_to_text.dictionary_casing")
-        if dictionary_casing:
-            stt_command.extend(["--dictionary-casing", dictionary_casing])
-
-        # Grapheme-to-phoneme model
-        g2p_model = profile.get("speech_to_text.kaldi.g2p_model")
-        if g2p_model:
-            stt_command.extend(
-                ["--g2p-model", shlex.quote(str(profile.read_path(g2p_model)))]
-            )
-
-        # Case transformation for grapheme-to-phoneme model
-        g2p_casing = profile.get("speech_to_text.g2p_casing")
-        if g2p_casing:
-            stt_command.extend(["--g2p-casing", g2p_casing])
-
-        services["speech_to_text"] = {
-            "image": "rhasspy/rhasspy-asr-kaldi-hermes",
-            "command": " ".join(stt_command),
-            "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
-            "depends_on": ["mqtt"],
-            "tty": True,
-        }
+    services["speech_to_text"] = {
+        "image": f"rhasspy/{service_name}",
+        "command": " ".join(stt_command),
+        "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
+        "depends_on": ["mqtt"],
+        "tty": True,
+    }
 
 
 # -----------------------------------------------------------------------------
-
-# TODO: Add support for remote, fuzzywuzzy, adapt, rasaNLU, flair
 
 
 def compose_intent_recognition(
@@ -1231,32 +1384,13 @@ def compose_intent_recognition(
     mqtt_port: int = 1883,
 ):
     """Print command for intent recognition system"""
-    assert intent_system in [
-        "fsticuffs"
-    ], "Only fsticuffs is supported for intent.system"
-
-    graph = profile.get("intent.fsticuffs.intent_graph")
-    assert graph
-
-    # TODO: sentences_dir
-    sentences_ini = profile.get("speech_to_text.sentences_ini")
-    assert sentences_ini
-
-    # TODO: Add fuzzy argument
-    intent_command = [
-        "--debug",
-        "--siteId",
-        str(siteId),
-        "--host",
-        str(mqtt_host),
-        "--port",
-        str(mqtt_port),
-        "--intent-graph",
-        shlex.quote(str(profile.read_path(graph))),
-    ]
+    intent_command = get_intent_recognition(
+        intent_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
+    service_name = intent_command.pop(0)
 
     services["intent_recognition"] = {
-        "image": "rhasspy/rhasspy-nlu-hermes",
+        "image": f"rhasspy/{service_name}",
         "command": " ".join(intent_command),
         "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
         "depends_on": ["mqtt"],
@@ -1276,20 +1410,17 @@ def compose_dialogue(
     mqtt_port: int = 1883,
 ):
     """Print command for dialogue management system"""
-    assert dialogue_system in ["hermes"], "Only hermes is supported for dialogue.system"
-
-    dialogue_command = [
-        "--debug",
-        "--siteId",
-        str(siteId),
-        "--host",
-        str(mqtt_host),
-        "--port",
-        str(mqtt_port),
-    ]
+    dialogue_command = get_dialogue(
+        dialogue_system,
+        profile,
+        siteId=siteId,
+        mqtt_host=mqtt_host,
+        mqtt_port=mqtt_port,
+    )
+    service_name = dialogue_command.pop(0)
 
     services["dialogue"] = {
-        "image": "rhasspy/rhasspy-dialogue-hermes",
+        "image": f"rhasspy/{service_name}",
         "command": " ".join(dialogue_command),
         "depends_on": ["mqtt"],
         "tty": True,
@@ -1297,8 +1428,6 @@ def compose_dialogue(
 
 
 # -----------------------------------------------------------------------------
-
-# TODO: Add support for remote, flite, picotts, MaryTTS, Google, NanoTTS
 
 
 def compose_text_to_speech(
@@ -1310,37 +1439,17 @@ def compose_text_to_speech(
     mqtt_port: int = 1883,
 ):
     """Print command for text to speech system"""
-    assert tts_system in [
-        "espeak"
-    ], "Only espeak is supported for text_to_speech.system"
+    tts_command = get_text_to_speech(
+        tts_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
+    service_name = tts_command.pop(0)
 
-    if tts_system == "espeak":
-        tts_command = ["espeak", "--stdout"]
-        voice = profile.get("text_to_speech.espeak.voice", "").strip()
-        if not voice:
-            voice = profile.get("language", "").strip()
-
-        if voice:
-            tts_command.extend(["-v", str(voice)])
-
-        tts_command = [
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-            "--tts-command",
-            shlex.quote(" ".join(tts_command)),
-        ]
-
-        services["text_to_speech"] = {
-            "image": "rhasspy/rhasspy-tts-cli-hermes",
-            "command": " ".join(tts_command),
-            "depends_on": ["mqtt"],
-            "tty": True,
-        }
+    services["text_to_speech"] = {
+        "image": f"rhasspy/{service_name}",
+        "command": " ".join(tts_command),
+        "depends_on": ["mqtt"],
+        "tty": True,
+    }
 
 
 # -----------------------------------------------------------------------------
