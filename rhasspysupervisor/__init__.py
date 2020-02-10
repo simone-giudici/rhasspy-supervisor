@@ -160,20 +160,14 @@ def print_webserver(
 # TODO: Add chunk sizes
 
 
-def print_microphone(
+def get_microphone(
     mic_system: str,
     profile: Profile,
-    out_file: typing.TextIO,
     siteId: str = "default",
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
-):
-    """Print command for microphone system"""
-    assert mic_system in [
-        "arecord",
-        "pyaudio",
-    ], "Only arecord/pyaudio are supported for microphone.system"
-
+) -> typing.List[str]:
+    """Get command for microphone system"""
     if mic_system == "arecord":
         record_command = [
             "arecord",
@@ -216,7 +210,10 @@ def print_microphone(
             "--test-command",
             shlex.quote(test_command),
         ]
-    elif mic_system == "pyaudio":
+
+        return mic_command
+
+    if mic_system == "pyaudio":
         mic_command = [
             "rhasspy-microphone-pyaudio-hermes",
             "--debug",
@@ -238,6 +235,77 @@ def print_microphone(
         if mic_device:
             mic_command.extend(["--device-index", str(mic_device)])
 
+        return mic_command
+
+    if mic_system == "command":
+        # Command to record audio
+        record_program = profile.get("microphone.command.record_program")
+        assert record_program, "microphone.command.record_program is required"
+        record_command = [record_program] + profile.get(
+            "microphone.command.record_arguments", []
+        )
+
+        mic_command = [
+            "rhasspy-microphone-cli-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--sample-rate",
+            "16000",
+            "--sample-width",
+            "2",
+            "--channels",
+            "1",
+            "--record-command",
+            shlex.quote(" ".join(record_command)),
+        ]
+
+        # Command to list available audio input devices
+        list_program = profile.get("microphone.command.list_program")
+        if list_program:
+            list_command = [list_program] + profile.get(
+                "microphone.command.list_arguments", []
+            )
+            mic_command.extend(
+                ["--list-command", shlex.quote(" ".join(str(v) for v in list_command))]
+            )
+        else:
+            _LOGGER.warning("No microphone device listing command provided.")
+
+        # Command to test available audio input devices
+        test_program = profile.get("microphone.command.test_program")
+        if test_program:
+            test_command = [test_program] + profile.get(
+                "microphone.command.test_arguments", []
+            )
+            mic_command.extend(
+                ["--test-command", shlex.quote(" ".join(str(v) for v in test_command))]
+            )
+        else:
+            _LOGGER.warning("No microphone device testing command provided.")
+
+        return mic_command
+
+    raise ValueError(f"Unsupported audio input system (got {mic_system})")
+
+
+def print_microphone(
+    mic_system: str,
+    profile: Profile,
+    out_file: typing.TextIO,
+    siteId: str = "default",
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+):
+    """Print command for microphone system"""
+    mic_command = get_microphone(
+        mic_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
+
     print("[program:microphone]", file=out_file)
     print("command=", " ".join(mic_command), sep="", file=out_file)
 
@@ -247,30 +315,23 @@ def print_microphone(
 # TODO: Add support for precise
 
 
-def print_wake(
+def get_wake(
     wake_system: str,
     profile: Profile,
-    out_file: typing.TextIO,
     siteId: str = "default",
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
-):
-    """Print command for wake system"""
-    assert wake_system in [
-        "porcupine",
-        "snowboy",
-        "pocketsphinx",
-    ], "Only porcupine/snowboy/pocketsphinx are supported for wake.system"
-
+) -> typing.List[str]:
+    """Get command for wake system"""
     if wake_system == "porcupine":
         library = profile.get("wake.porcupine.library_path")
-        assert library
+        assert library, "wake.porcupine.library_path required"
 
         model = profile.get("wake.porcupine.model_path")
-        assert model
+        assert model, "wake.porcupine.model_path required"
 
         keyword = profile.get("wake.porcupine.keyword_path")
-        assert keyword
+        assert keyword, "wake.porcupine.keyword_path required"
 
         sensitivity = profile.get("wake.porcupine.sensitivity", "0.5")
 
@@ -292,7 +353,10 @@ def print_wake(
             "--sensitivity",
             str(sensitivity),
         ]
-    elif wake_system == "snowboy":
+
+        return wake_command
+
+    if wake_system == "snowboy":
         wake_command = [
             "rhasspy-wake-snowboy-hermes",
             "--debug",
@@ -337,16 +401,21 @@ def print_wake(
                 str(settings["apply_frontend"]),
             ]
             wake_command.extend(["--model"] + model_args)
-    elif wake_system == "pocketsphinx":
+
+        return wake_command
+
+    if wake_system == "pocketsphinx":
         # Load decoder settings (use speech-to-text configuration as a fallback)
         acoustic_model = profile.get("wake.pocketsphinx.acoustic_model") or profile.get(
             "speech_to_text.pocketsphinx.acoustic_model"
         )
-        assert acoustic_model
+        assert acoustic_model, "acoustic model required"
 
         dictionary = profile.get("wake.pocketsphinx.dictionary") or profile.get(
             "speech_to_text.pocketsphinx.dictionary"
         )
+
+        assert dictionary, "dictionary required"
 
         wake_command = [
             "rhasspy-wake-pocketsphinx-hermes",
@@ -372,6 +441,46 @@ def print_wake(
             wake_command.extend(
                 ["--mllr-matrix", shlex.quote(str(profile.read_path(mllr_matrix)))]
             )
+
+        return wake_command
+
+    if wake_system == "command":
+        user_program = profile.get("wake.command.program")
+        assert user_program, "wake.command.program is required"
+        user_command = [user_program] + profile.get(
+            "wake.command.arguments", []
+        )
+
+        wake_command = [
+            "rhasspy-remote-http-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--wake-command",
+            shlex.quote(" ".join(str(v) for v in user_command)),
+        ]
+
+        return wake_command
+
+    raise ValueError(f"Unsupported wake system (got {wake_system})")
+
+
+def print_wake(
+    wake_system: str,
+    profile: Profile,
+    out_file: typing.TextIO,
+    siteId: str = "default",
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+):
+    """Print command for wake system"""
+    wake_command = get_wake(
+        wake_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
 
     print("[program:wake_word]", file=out_file)
     print("command=", " ".join(wake_command), sep="", file=out_file)
@@ -894,8 +1003,6 @@ def get_text_to_speech(
 
     raise ValueError(f"Unsupported text to speech system (got {tts_system})")
 
-    return tts_command
-
 
 def print_text_to_speech(
     tts_system: str,
@@ -917,6 +1024,74 @@ def print_text_to_speech(
 # -----------------------------------------------------------------------------
 
 
+def get_speakers(
+    sound_system: str,
+    profile: Profile,
+    siteId: str = "default",
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+) -> typing.List[str]:
+    """Get command for audio output system"""
+    if sound_system == "aplay":
+        play_command = ["aplay", "-q", "-t", "wav"]
+        list_command = ["aplay", "-L"]
+        sound_device = profile.get("sounds.arecord.device", "").strip()
+        if sound_device:
+            play_command.extend(["-D", str(sound_device)])
+
+        output_command = [
+            "rhasspy-speakers-cli-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--play-command",
+            shlex.quote(" ".join(play_command)),
+            "--list-command",
+            shlex.quote(" ".join(list_command)),
+        ]
+
+        return output_command
+
+    if sound_system == "command":
+        # Command to play WAV files
+        play_program = profile.get("sounds.command.play_program")
+        assert play_program, "sounds.command.play_program is required"
+        play_command = [play_program] + profile.get("sounds.command.play_arguments", [])
+
+        output_command = [
+            "rhasspy-speakers-cli-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--play-command",
+            shlex.quote(" ".join(str(v) for v in play_command)),
+        ]
+
+        # Command to list available audio output devices
+        list_program = profile.get("sounds.command.list_program")
+        if list_program:
+            list_command = [list_program] + profile.get(
+                "sounds.command.list_arguments", []
+            )
+            output_command.extend(
+                ["--list-command", shlex.quote(" ".join(str(v) for v in list_command))]
+            )
+        else:
+            _LOGGER.warning("No sound output device listing command provided.")
+
+        return output_command
+
+    raise ValueError(f"Unsupported sound output system (got {sound_system})")
+
+
 def print_speakers(
     sound_system: str,
     profile: Profile,
@@ -926,28 +1101,9 @@ def print_speakers(
     mqtt_port: int = 1883,
 ):
     """Print command for audio output system"""
-    assert sound_system in ["aplay"], "Only aplay is supported for sounds.system"
-
-    play_command = ["aplay", "-q", "-t", "wav"]
-    list_command = ["aplay", "-L"]
-    sound_device = profile.get("sounds.arecord.device", "").strip()
-    if sound_device:
-        play_command.extend(["-D", str(sound_device)])
-
-    output_command = [
-        "rhasspy-speakers-cli-hermes",
-        "--debug",
-        "--siteId",
-        str(siteId),
-        "--host",
-        str(mqtt_host),
-        "--port",
-        str(mqtt_port),
-        "--play-command",
-        shlex.quote(" ".join(play_command)),
-        "--list-command",
-        shlex.quote(" ".join(list_command)),
-    ]
+    output_command = get_speakers(
+        sound_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
 
     print("[program:speakers]", file=out_file)
     print("command=", " ".join(output_command), sep="", file=out_file)
@@ -1097,8 +1253,6 @@ def compose_webserver(
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add chunk sizes
-
 
 def compose_microphone(
     mic_system: str,
@@ -1109,88 +1263,18 @@ def compose_microphone(
     mqtt_port: int = 1883,
 ):
     """Print command for microphone system"""
-    assert mic_system in [
-        "arecord",
-        "pyaudio",
-    ], "Only arecord/pyaudio are supported for microphone.system"
+    mic_command = get_microphone(
+        mic_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
+    service_name = mic_command.pop(0)
 
-    if mic_system == "arecord":
-        record_command = [
-            "arecord",
-            "-q",
-            "-r",
-            "16000",
-            "-f",
-            "S16_LE",
-            "-c",
-            "1",
-            "-t",
-            "raw",
-        ]
-        list_command = ["arecord", "-L"]
-        test_command = "arecord -q -D {} -r 16000 -f S16_LE -c 1 -t raw"
-
-        mic_device = profile.get("microphone.arecord.device", "").strip()
-        if mic_device:
-            record_command.extend(["-D", str(mic_device)])
-
-        mic_command = [
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-            "--sample-rate",
-            "16000",
-            "--sample-width",
-            "2",
-            "--channels",
-            "1",
-            "--record-command",
-            shlex.quote(" ".join(record_command)),
-            "--list-command",
-            shlex.quote(" ".join(list_command)),
-            "--test-command",
-            shlex.quote(test_command),
-        ]
-
-        services["microphone"] = {
-            "image": "rhasspy/rhasspy-microphone-cli-hermes",
-            "command": " ".join(mic_command),
-            "devices": ["/dev/snd"],
-            "depends_on": ["mqtt"],
-            "tty": True,
-        }
-    elif mic_system == "pyaudio":
-        mic_command = [
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-            "--sample-rate",
-            "16000",
-            "--sample-width",
-            "2",
-            "--channels",
-            "1",
-        ]
-
-        mic_device = profile.get("microphone.pyaudio.device", "").strip()
-        if mic_device:
-            mic_command.extend(["--device-index", str(mic_device)])
-
-        services["microphone"] = {
-            "image": "rhasspy/rhasspy-microphone-pyaudio-hermes",
-            "command": " ".join(mic_command),
-            "devices": ["/dev/snd"],
-            "depends_on": ["mqtt"],
-            "tty": True,
-        }
+    services["microphone"] = {
+        "image": f"rhasspy/{service_name}",
+        "command": " ".join(mic_command),
+        "devices": ["/dev/snd"],
+        "depends_on": ["mqtt"],
+        "tty": True,
+    }
 
 
 # -----------------------------------------------------------------------------
@@ -1207,143 +1291,18 @@ def compose_wake(
     mqtt_port: int = 1883,
 ):
     """Print command for wake system"""
-    assert wake_system in [
-        "porcupine",
-        "snowboy",
-        "pocketsphinx",
-    ], "Only porcupine/snowboy/pocketsphinx are supported for wake.system"
+    wake_command = get_wake(
+        wake_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
+    service_name = wake_command.pop(0)
 
-    if wake_system == "porcupine":
-        library = profile.get("wake.porcupine.library_path")
-        assert library
-
-        model = profile.get("wake.porcupine.model_path")
-        assert model
-
-        keyword = profile.get("wake.porcupine.keyword_path")
-        assert keyword
-
-        sensitivity = profile.get("wake.porcupine.sensitivity", "0.5")
-
-        wake_command = [
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-            "--library",
-            shlex.quote(str(profile.read_path(library))),
-            "--model",
-            shlex.quote(str(profile.read_path(model))),
-            "--keyword",
-            shlex.quote(str(profile.read_path(keyword))),
-            "--sensitivity",
-            str(sensitivity),
-        ]
-
-        services["wake"] = {
-            "image": "rhasspy/rhasspy-wake-porcupine-hermes",
-            "command": " ".join(wake_command),
-            "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
-            "depends_on": ["mqtt"],
-            "tty": True,
-        }
-    elif wake_system == "snowboy":
-        wake_command = [
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-        ]
-
-        # Default settings
-        sensitivity = str(profile.get("wake.snowboy.sensitivity", "0.5"))
-        audio_gain = float(profile.get("wake.snowboy.audio_gain", "1.0"))
-        apply_frontend = bool(profile.get("wake.snowboy.apply_frontend", False))
-
-        model_names: typing.List[str] = profile.get(
-            "wake.snowboy.model", "snowboy/snowboy.umdl"
-        ).split(",")
-
-        model_settings: typing.Dict[str, typing.Dict[str, typing.Any]] = profile.get(
-            "wake.snowboy.model_settings", {}
-        )
-
-        for model_name in model_names:
-            # Add default settings
-            settings = model_settings.get(model_name, {})
-            if "sensitivity" not in settings:
-                settings["sensitivity"] = sensitivity
-
-            if "audio_gain" not in settings:
-                settings["audio_gain"] = audio_gain
-
-            if "apply_frontend" not in settings:
-                settings["apply_frontend"] = apply_frontend
-
-            model_path = profile.read_path(model_name)
-            model_args = [
-                str(model_path),
-                str(settings["sensitivity"]),
-                str(settings["audio_gain"]),
-                str(settings["apply_frontend"]),
-            ]
-            wake_command.extend(["--model"] + model_args)
-
-        services["wake"] = {
-            "image": "rhasspy/rhasspy-wake-snowboy-hermes",
-            "command": " ".join(wake_command),
-            "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
-            "depends_on": ["mqtt"],
-            "tty": True,
-        }
-    elif wake_system == "pocketsphinx":
-        # Load decoder settings (use speech-to-text configuration as a fallback)
-        acoustic_model = profile.get("wake.pocketsphinx.acoustic_model") or profile.get(
-            "speech_to_text.pocketsphinx.acoustic_model"
-        )
-        assert acoustic_model
-
-        dictionary = profile.get("wake.pocketsphinx.dictionary") or profile.get(
-            "speech_to_text.pocketsphinx.dictionary"
-        )
-
-        wake_command = [
-            "--debug",
-            "--keyphrase",
-            str(profile.get("wake.pocketsphinx.keyphrase", "okay raspy")),
-            "--keyphrase-threshold",
-            str(profile.get("wake.pocketsphinx.threshold", "1e-40")),
-            "--acoustic-model",
-            shlex.quote(str(profile.read_path(acoustic_model))),
-            "--dictionary",
-            shlex.quote(str(profile.read_path(dictionary))),
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-        ]
-
-        mllr_matrix = profile.get("wake.pocketsphinx.mllr_matrix")
-        if mllr_matrix:
-            wake_command.extend(
-                ["--mllr-matrix", shlex.quote(str(profile.read_path(mllr_matrix)))]
-            )
-
-        services["wake"] = {
-            "image": "rhasspy/rhasspy-wake-snowboy-hermes",
-            "command": " ".join(wake_command),
-            "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
-            "depends_on": ["mqtt"],
-            "tty": True,
-        }
+    services["wake"] = {
+        "image": f"rhasspy/{service_name}",
+        "command": " ".join(wake_command),
+        "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
+        "depends_on": ["mqtt"],
+        "tty": True,
+    }
 
 
 # -----------------------------------------------------------------------------
@@ -1464,30 +1423,13 @@ def compose_speakers(
     mqtt_port: int = 1883,
 ):
     """Print command for audio output system"""
-    assert sound_system in ["aplay"], "Only aplay is supported for sounds.system"
-
-    play_command = ["aplay", "-q", "-t", "wav"]
-    list_command = ["aplay", "-L"]
-    sound_device = profile.get("sounds.arecord.device", "").strip()
-    if sound_device:
-        play_command.extend(["-D", str(sound_device)])
-
-    output_command = [
-        "--debug",
-        "--siteId",
-        str(siteId),
-        "--host",
-        str(mqtt_host),
-        "--port",
-        str(mqtt_port),
-        "--play-command",
-        shlex.quote(" ".join(play_command)),
-        "--list-command",
-        shlex.quote(" ".join(list_command)),
-    ]
+    output_command = get_speakers(
+        sound_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
+    service_name = output_command.pop(0)
 
     services["speakers"] = {
-        "image": "rhasspy/rhasspy-speakers-cli-hermes",
+        "image": f"rhasspy/{service_name}",
         "command": " ".join(output_command),
         "devices": ["/dev/snd"],
         "depends_on": ["mqtt"],
