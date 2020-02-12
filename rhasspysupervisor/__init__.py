@@ -97,6 +97,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     else:
         _LOGGER.debug("Intent recognition disabled (system=%s)", intent_system)
 
+    # Intent Handling
+    handle_system = profile.get("handle.system", "dummy")
+    if handle_system != "dummy":
+        print_intent_handling(handle_system, profile, out_file, **mqtt_settings)
+        write_boilerplate()
+    else:
+        _LOGGER.debug("Intent handling disabled (system=%s)", handle_system)
+
     # Text to Speech
     tts_system = profile.get("text_to_speech.system", "dummy")
     if tts_system != "dummy":
@@ -447,9 +455,7 @@ def get_wake(
     if wake_system == "command":
         user_program = profile.get("wake.command.program")
         assert user_program, "wake.command.program is required"
-        user_command = [user_program] + profile.get(
-            "wake.command.arguments", []
-        )
+        user_command = [user_program] + profile.get("wake.command.arguments", [])
 
         wake_command = [
             "rhasspy-remote-http-hermes",
@@ -463,6 +469,19 @@ def get_wake(
             "--wake-command",
             shlex.quote(" ".join(str(v) for v in user_command)),
         ]
+
+        # Audio format
+        sample_rate = profile.get("wake.command.sample_rate")
+        if sample_rate:
+            wake_command.extend(["--wake-sample-rate", str(sample_rate)])
+
+        sample_width = profile.get("wake.command.sample_width")
+        if sample_width:
+            wake_command.extend(["--wake-sample-width", str(sample_width)])
+
+        channels = profile.get("wake.command.channels")
+        if channels:
+            wake_command.extend(["--wake-channels", str(channels)])
 
         return wake_command
 
@@ -870,6 +889,112 @@ def print_intent_recognition(
 
     print("[program:intent_recognition]", file=out_file)
     print("command=", " ".join(intent_command), sep="", file=out_file)
+
+
+# -----------------------------------------------------------------------------
+
+
+def get_intent_handling(
+    handle_system: str,
+    profile: Profile,
+    siteId: str = "default",
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+):
+    """Get command for intent handling system"""
+    if handle_system == "hass":
+        url = profile.get("home_assistant.url")
+        assert url, "home_assistant.url is required"
+
+        handle_command = [
+            "rhasspy-homeassistant-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--hass-url",
+            shlex.quote(url),
+        ]
+
+        # Additional options
+        access_token = profile.get("home_assistant.access_token")
+        if access_token:
+            handle_command.extend(["--access-token", str(access_token)])
+
+        api_password = profile.get("home_assistant.api_password")
+        if api_password:
+            handle_command.extend(["--api-password", str(api_password)])
+
+        event_type_format = profile.get("home_assistant.event_type_format")
+        if event_type_format:
+            handle_command.extend(["--event-type-format", str(event_type_format)])
+
+        pem_file = profile.get("home_assistant.pem_file")
+        if pem_file:
+            handle_command.extend(["--pem-file", str(pem_file)])
+
+        return handle_command
+
+    if handle_system == "remote":
+        url = profile.get("handle.remote.url")
+        assert url, "handle.remote.url is required"
+
+        handle_command = [
+            "rhasspy-remote-http-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--handle-url",
+            shlex.quote(url),
+        ]
+
+        return handle_command
+
+    if handle_system == "command":
+        user_program = profile.get("handle.command.program")
+        assert user_program, "handle.command.program is required"
+        user_command = [user_program] + profile.get("handle.command.arguments", [])
+
+        handle_command = [
+            "rhasspy-remote-http-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--handle-command",
+            shlex.quote(" ".join(str(v) for v in user_command)),
+        ]
+
+        return handle_command
+
+    raise ValueError(f"Unsupported intent handling system (got {handle_system})")
+
+
+def print_intent_handling(
+    handle_system: str,
+    profile: Profile,
+    out_file: typing.TextIO,
+    siteId: str = "default",
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+):
+    """Print command for intent handling system"""
+    handle_command = get_intent_handling(
+        handle_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+    )
+
+    print("[program:intent_handling]", file=out_file)
+    print("command=", " ".join(handle_command), sep="", file=out_file)
 
 
 # -----------------------------------------------------------------------------
