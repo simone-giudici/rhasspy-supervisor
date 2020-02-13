@@ -1,5 +1,6 @@
-SOURCE = rhasspysupervisor
-PYTHON_FILES = $(SOURCE)/*.py *.py
+PYTHON_NAME = rhasspysupervisor
+PACKAGE_NAME = rhasspy-supervisor
+PYTHON_FILES = $(PYTHON_NAME)/*.py *.py
 SHELL_FILES = bin/*
 
 .PHONY: reformat check test venv dist pyinstaller debian
@@ -17,11 +18,22 @@ reformat:
 check:
 	scripts/check-code.sh $(PYTHON_FILES)
 
-venv:
+venv: rhasspy-libs
 	scripts/create-venv.sh
 
 dist:
 	python3 setup.py sdist
+
+# -----------------------------------------------------------------------------
+# Docker
+# -----------------------------------------------------------------------------
+
+docker: pyinstaller
+	docker build . -t "rhasspy/$(PACKAGE_NAME):$(version)" -t "rhasspy/$(PACKAGE_NAME):latest"
+
+deploy:
+	echo "$$DOCKER_PASSWORD" | docker login -u "$$DOCKER_USERNAME" --password-stdin
+	docker push "rhasspy/$(PACKAGE_NAME):$(version)"
 
 # -----------------------------------------------------------------------------
 # Debian
@@ -32,3 +44,18 @@ pyinstaller:
 
 debian:
 	scripts/build-debian.sh "${architecture}" "${version}"
+
+# -----------------------------------------------------------------------------
+# Downloads
+# -----------------------------------------------------------------------------
+
+# Rhasspy development dependencies
+rhasspy-libs: $(DOWNLOAD_DIR)/rhasspy-profile-0.1.3.tar.gz
+
+$(DOWNLOAD_DIR)/rhasspy-profile-0.1.3.tar.gz:
+	mkdir -p "$(DOWNLOAD_DIR)"
+	curl -sSfL -o $@ "https://github.com/rhasspy/rhasspy-profile/archive/master.tar.gz"
+
+$(DOWNLOAD_DIR)/rhasspy-nlu-0.1.6.tar.gz:
+	mkdir -p "$(DOWNLOAD_DIR)"
+	curl -sSfL -o $@ "https://github.com/rhasspy/rhasspy-nlu/archive/master.tar.gz"

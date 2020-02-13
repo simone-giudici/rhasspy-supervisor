@@ -20,7 +20,7 @@ def main():
     )
     parser.add_argument(
         "--system-profiles",
-        help="Directory with base profile files (read only, default=$CWD/profiles)",
+        help="Directory with base profile files (read only, default=bundled)",
     )
     parser.add_argument(
         "--user-profiles",
@@ -52,10 +52,8 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO)
 
-    if not args.system_profiles:
+    if args.system_profiles:
         args.system_profiles = Path("profiles")
-    else:
-        args.system_profiles = Path(args.system_profiles)
 
     if not args.user_profiles:
         args.user_profiles = Path("~/.config/rhasspy/profiles").expanduser()

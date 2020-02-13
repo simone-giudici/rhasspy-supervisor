@@ -1,0 +1,7 @@
+Package: rhasspy-supervisor
+Version: ${version}
+Section: utils
+Priority: optional
+Architecture: ${architecture}
+Maintainer: Michael Hansen
+Description: Command-line tool to generate supervisord configs for Rhasspy

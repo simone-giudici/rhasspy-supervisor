@@ -1269,7 +1269,7 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # -------------------------------------------------------------------------
 
     # Web server
-    compose_webserver(profile, services, **mqtt_settings)
+    # compose_webserver(profile, services, **mqtt_settings)
 
     # -------------------------------------------------------------------------
 
@@ -1337,6 +1337,7 @@ def compose_mqtt(services: typing.Dict[str, typing.Any], mqtt_port: int):
         "image": "eclipse-mosquitto",
         "entrypoint": "mosquitto",
         "command": f"-p {mqtt_port}",
+        "ports": [f"{mqtt_port}:{mqtt_port}"],
         "tty": True,
     }
 

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+if [[ -z "${rhasspysupervisor_dir}" ]]; then
+    this_dir="$( cd "$( dirname "$0" )" && pwd )"
+    rhasspysupervisor_dir="${this_dir}/../lib/rhasspysupervisor"
+fi
+
+"${rhasspysupervisor_dir}/rhasspysupervisor" "$@"
