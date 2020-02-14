@@ -1,8 +1,28 @@
 ARG BUILD_ARCH=amd64
-FROM ${BUILD_ARCH}/debian:buster-slim
+FROM ${BUILD_ARCH}/python:3.7-alpine as build
+
+RUN apk add --no-cache build-base
+
+ENV VENV=/usr/.venv
+
+RUN python3 -m venv $VENV
+RUN $VENV/bin/pip3 install --upgrade pip
+
+COPY requirements_rhasspy.txt requirements.txt /tmp/
+RUN $VENV/bin/pip3 install -r /tmp/requirements_rhasspy.txt
+RUN $VENV/bin/pip3 install -r /tmp/requirements.txt
+
+# -----------------------------------------------------------------------------
+
 ARG BUILD_ARCH=amd64
+FROM ${BUILD_ARCH}/python:3.7-alpine
 
-COPY pyinstaller/dist/* /usr/lib/rhasspysupervisor/
-COPY debian/bin/* /usr/bin/
+WORKDIR /usr
+COPY --from=build /usr/.venv /usr/.venv/
 
-ENTRYPOINT ["/usr/bin/rhasspy-supervisor"]
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
+COPY **/*.py rhasspysupervisor/
+
+ENTRYPOINT ["/usr/.venv/bin/python3", "-m", "rhasspysupervisor"]
