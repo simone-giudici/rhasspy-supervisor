@@ -83,7 +83,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
 
     # Speech to Text
     stt_system = profile.get("speech_to_text.system", "dummy")
-    if stt_system != "dummy":
+    if stt_system not in ["dummy", "hermes"]:
         print_speech_to_text(stt_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
     else:
@@ -91,7 +91,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
 
     # Intent Recognition
     intent_system = profile.get("intent.system", "dummy")
-    if intent_system != "dummy":
+    if intent_system not in ["dummy", "hermes"]:
         print_intent_recognition(intent_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
     else:
@@ -99,7 +99,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
 
     # Intent Handling
     handle_system = profile.get("handle.system", "dummy")
-    if handle_system != "dummy":
+    if handle_system not in ["dummy", "hermes"]:
         print_intent_handling(handle_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
     else:
@@ -107,7 +107,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
 
     # Text to Speech
     tts_system = profile.get("text_to_speech.system", "dummy")
-    if tts_system != "dummy":
+    if tts_system not in ["dummy", "hermes"]:
         print_text_to_speech(tts_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
     else:
@@ -115,7 +115,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
 
     # Dialogue Management
     dialogue_system = profile.get("dialogue.system", "dummy")
-    if dialogue_system != "dummy":
+    if dialogue_system not in ["dummy", "hermes"]:
         print_dialogue(dialogue_system, profile, out_file, **mqtt_settings)
         write_boilerplate()
     else:
@@ -1008,7 +1008,7 @@ def get_dialogue(
     mqtt_port: int = 1883,
 ) -> typing.List[str]:
     """Get command for dialogue management system"""
-    if dialogue_system == "hermes":
+    if dialogue_system == "rhaspy":
         dialogue_command = [
             "rhasspy-dialogue-hermes",
             "--debug",
@@ -1296,28 +1296,28 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
 
     # Speech to Text
     stt_system = profile.get("speech_to_text.system", "dummy")
-    if stt_system != "dummy":
+    if stt_system not in ["dummy", "hermes"]:
         compose_speech_to_text(stt_system, profile, services, **mqtt_settings)
     else:
         _LOGGER.debug("Speech to text disabled (system=%s)", stt_system)
 
     # Intent Recognition
     intent_system = profile.get("intent.system", "dummy")
-    if intent_system != "dummy":
+    if intent_system not in ["dummy", "hermes"]:
         compose_intent_recognition(intent_system, profile, services, **mqtt_settings)
     else:
         _LOGGER.debug("Intent recognition disabled (system=%s)", intent_system)
 
     # Text to Speech
     tts_system = profile.get("text_to_speech.system", "dummy")
-    if tts_system != "dummy":
+    if tts_system not in ["dummy", "hermes"]:
         compose_text_to_speech(tts_system, profile, services, **mqtt_settings)
     else:
         _LOGGER.debug("Text to speech disabled (system=%s)", tts_system)
 
     # Dialogue Management
     dialogue_system = profile.get("dialogue.system", "dummy")
-    if dialogue_system != "dummy":
+    if dialogue_system not in ["dummy", "hermes"]:
         compose_dialogue(dialogue_system, profile, services, **mqtt_settings)
     else:
         _LOGGER.debug("Dialogue disabled (system=%s)", dialogue_system)
