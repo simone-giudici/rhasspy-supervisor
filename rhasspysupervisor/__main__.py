@@ -52,9 +52,6 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO)
 
-    if args.system_profiles:
-        args.system_profiles = Path("profiles")
-
     if not args.user_profiles:
         args.user_profiles = Path("~/.config/rhasspy/profiles").expanduser()
     else:
@@ -63,7 +60,12 @@ def main():
     _LOGGER.debug(args)
 
     # Load profile
-    _LOGGER.debug("Loading profile %s", args.profile)
+    _LOGGER.debug(
+        "Loading profile %s (user=%s, system=%s)",
+        args.profile,
+        args.user_profiles,
+        args.system_profiles,
+    )
     profile = Profile(args.profile, args.system_profiles, args.user_profiles)
 
     # Convert to supervisord conf

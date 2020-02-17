@@ -1008,7 +1008,7 @@ def get_dialogue(
     mqtt_port: int = 1883,
 ) -> typing.List[str]:
     """Get command for dialogue management system"""
-    if dialogue_system == "rhaspy":
+    if dialogue_system == "rhasspy":
         dialogue_command = [
             "rhasspy-dialogue-hermes",
             "--debug",
