@@ -32,26 +32,18 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     print("", file=out_file)
 
     # MQTT
-    mqtt_settings = {
-        "siteId": str(profile.get("mqtt.site_id", "default")),
-        "mqtt_host": str(profile.get("mqtt.host", "localhost")),
-        "mqtt_port": int(profile.get("mqtt.port", 1883)),
-    }
+    siteId = str(profile.get("mqtt.site_id", "default"))
+    mqtt_host = str(profile.get("mqtt.host", "localhost"))
+    mqtt_port = int(profile.get("mqtt.port", 1883))
+
+    # mqtt_username = str(profile.get("mqtt.username", "")).strip()
+    # mqtt_password = str(profile.get("mqtt.password", "")).strip()
 
     remote_mqtt = profile.get("mqtt.enabled", False)
-    if remote_mqtt:
-        # Use external broker
-        mqtt_username = str(profile.get("mqtt.username", "")).strip()
-        mqtt_password = str(profile.get("mqtt.password", "")).strip()
-
-        if mqtt_username:
-            # Add username/password
-            mqtt_settings["mqtt_username"] = mqtt_username
-            mqtt_settings["mqtt_password"] = mqtt_password
-    else:
+    if not remote_mqtt:
         # Use internal broker (mosquitto) on custom port
-        mqtt_settings["mqtt_host"] = "localhost"
-        mqtt_settings["mqtt_port"] = local_mqtt_port
+        mqtt_host = "localhost"
+        mqtt_port = local_mqtt_port
         print_mqtt(out_file, mqtt_port=local_mqtt_port)
         write_boilerplate()
 
@@ -60,7 +52,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Microphone
     mic_system = profile.get("microphone.system", "dummy")
     if mic_system not in {"dummy", "hermes"}:
-        print_microphone(mic_system, profile, out_file, **mqtt_settings)
+        print_microphone(
+            mic_system,
+            profile,
+            out_file,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
         write_boilerplate()
     else:
         _LOGGER.debug("Microphone disabled (system=%s)", mic_system)
@@ -68,7 +67,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Speakers
     sound_system = profile.get("sounds.system", "dummy")
     if sound_system not in {"dummy", "hermes"}:
-        print_speakers(sound_system, profile, out_file, **mqtt_settings)
+        print_speakers(
+            sound_system,
+            profile,
+            out_file,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
         write_boilerplate()
     else:
         _LOGGER.debug("Speakers disabled (system=%s)", sound_system)
@@ -76,7 +82,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Wake Word
     wake_system = profile.get("wake.system", "dummy")
     if wake_system not in {"dummy", "hermes"}:
-        print_wake(wake_system, profile, out_file, **mqtt_settings)
+        print_wake(
+            wake_system,
+            profile,
+            out_file,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
         write_boilerplate()
     else:
         _LOGGER.debug("Wake word disabled (system=%s)", wake_system)
@@ -84,7 +97,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Speech to Text
     stt_system = profile.get("speech_to_text.system", "dummy")
     if stt_system not in {"dummy", "hermes"}:
-        print_speech_to_text(stt_system, profile, out_file, **mqtt_settings)
+        print_speech_to_text(
+            stt_system,
+            profile,
+            out_file,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
         write_boilerplate()
     else:
         _LOGGER.debug("Speech to text disabled (system=%s)", stt_system)
@@ -92,7 +112,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Intent Recognition
     intent_system = profile.get("intent.system", "dummy")
     if intent_system not in {"dummy", "hermes"}:
-        print_intent_recognition(intent_system, profile, out_file, **mqtt_settings)
+        print_intent_recognition(
+            intent_system,
+            profile,
+            out_file,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
         write_boilerplate()
     else:
         _LOGGER.debug("Intent recognition disabled (system=%s)", intent_system)
@@ -100,7 +127,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Intent Handling
     handle_system = profile.get("handle.system", "dummy")
     if handle_system not in {"dummy", "hermes"}:
-        print_intent_handling(handle_system, profile, out_file, **mqtt_settings)
+        print_intent_handling(
+            handle_system,
+            profile,
+            out_file,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
         write_boilerplate()
     else:
         _LOGGER.debug("Intent handling disabled (system=%s)", handle_system)
@@ -108,7 +142,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Text to Speech
     tts_system = profile.get("text_to_speech.system", "dummy")
     if tts_system not in {"dummy", "hermes"}:
-        print_text_to_speech(tts_system, profile, out_file, **mqtt_settings)
+        print_text_to_speech(
+            tts_system,
+            profile,
+            out_file,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
         write_boilerplate()
     else:
         _LOGGER.debug("Text to speech disabled (system=%s)", tts_system)
@@ -116,7 +157,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Dialogue Management
     dialogue_system = profile.get("dialogue.system", "dummy")
     if dialogue_system not in {"dummy", "hermes"}:
-        print_dialogue(dialogue_system, profile, out_file, **mqtt_settings)
+        print_dialogue(
+            dialogue_system,
+            profile,
+            out_file,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
         write_boilerplate()
     else:
         _LOGGER.debug("Dialogue disabled (system=%s)", dialogue_system)
@@ -140,7 +188,7 @@ def print_mqtt(out_file: typing.TextIO, mqtt_port: int):
 
 
 def print_webserver(
-    profile: Profile, out_file: typing.TextIO, mqtt_host: str, mqtt_port: int, **kwargs
+    profile: Profile, out_file: typing.TextIO, mqtt_host: str, mqtt_port: int
 ):
     """Print command for Rhasspy web server (http://localhost:12101)"""
     web_command = [
@@ -580,6 +628,12 @@ def get_speech_to_text(
         g2p_casing = profile.get("speech_to_text.g2p_casing")
         if g2p_casing:
             stt_command.extend(["--g2p-casing", g2p_casing])
+
+        unknown_words = profile.get("speech_to_text.pocketsphinx.unknown_words")
+        if unknown_words:
+            stt_command.extend(
+                ["--unknown-words", shlex.quote(str(profile.write_path(unknown_words)))]
+            )
 
         return stt_command
 
@@ -1244,81 +1298,117 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     services: typing.Dict[str, typing.Any] = {}
 
     # MQTT
-    mqtt_settings = {
-        "siteId": str(profile.get("mqtt.site_id", "default")),
-        "mqtt_host": str(profile.get("mqtt.host", "localhost")),
-        "mqtt_port": int(profile.get("mqtt.port", 1883)),
-    }
+    siteId = str(profile.get("mqtt.site_id", "default"))
+    mqtt_host = str(profile.get("mqtt.host", "localhost"))
+    mqtt_port = int(profile.get("mqtt.port", 1883))
+
+    # mqtt_username = str(profile.get("mqtt.username", "")).strip()
+    # mqtt_password = str(profile.get("mqtt.password", "")).strip()
 
     remote_mqtt = profile.get("mqtt.enabled", False)
-    if remote_mqtt:
-        # Use external broker
-        mqtt_username = str(profile.get("mqtt.username", "")).strip()
-        mqtt_password = str(profile.get("mqtt.password", "")).strip()
-
-        if mqtt_username:
-            # Add username/password
-            mqtt_settings["mqtt_username"] = mqtt_username
-            mqtt_settings["mqtt_password"] = mqtt_password
-    else:
+    if not remote_mqtt:
         # Use internal broker (mosquitto) on custom port
-        mqtt_settings["mqtt_host"] = "mqtt"
-        mqtt_settings["mqtt_port"] = local_mqtt_port
+        mqtt_host = "mqtt"
+        mqtt_host = local_mqtt_port
         compose_mqtt(services, mqtt_port=local_mqtt_port)
-
-    # -------------------------------------------------------------------------
-
-    # Web server
-    # compose_webserver(profile, services, **mqtt_settings)
 
     # -------------------------------------------------------------------------
 
     # Microphone
     mic_system = profile.get("microphone.system", "dummy")
     if mic_system not in {"dummy", "hermes"}:
-        compose_microphone(mic_system, profile, services, **mqtt_settings)
+        compose_microphone(
+            mic_system,
+            profile,
+            services,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
     else:
         _LOGGER.debug("Microphone disabled (system=%s)", mic_system)
 
     # Speakers
     sound_system = profile.get("sounds.system", "dummy")
     if sound_system not in {"dummy", "hermes"}:
-        compose_speakers(sound_system, profile, services, **mqtt_settings)
+        compose_speakers(
+            sound_system,
+            profile,
+            services,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
     else:
         _LOGGER.debug("Speakers disabled (system=%s)", sound_system)
 
     # Wake Word
     wake_system = profile.get("wake.system", "dummy")
     if wake_system not in {"dummy", "hermes"}:
-        compose_wake(wake_system, profile, services, **mqtt_settings)
+        compose_wake(
+            wake_system,
+            profile,
+            services,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
     else:
         _LOGGER.debug("Wake word disabled (system=%s)", wake_system)
 
     # Speech to Text
     stt_system = profile.get("speech_to_text.system", "dummy")
     if stt_system not in {"dummy", "hermes"}:
-        compose_speech_to_text(stt_system, profile, services, **mqtt_settings)
+        compose_speech_to_text(
+            stt_system,
+            profile,
+            services,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
     else:
         _LOGGER.debug("Speech to text disabled (system=%s)", stt_system)
 
     # Intent Recognition
     intent_system = profile.get("intent.system", "dummy")
     if intent_system not in {"dummy", "hermes"}:
-        compose_intent_recognition(intent_system, profile, services, **mqtt_settings)
+        compose_intent_recognition(
+            intent_system,
+            profile,
+            services,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
     else:
         _LOGGER.debug("Intent recognition disabled (system=%s)", intent_system)
 
     # Text to Speech
     tts_system = profile.get("text_to_speech.system", "dummy")
     if tts_system not in {"dummy", "hermes"}:
-        compose_text_to_speech(tts_system, profile, services, **mqtt_settings)
+        compose_text_to_speech(
+            tts_system,
+            profile,
+            services,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
     else:
         _LOGGER.debug("Text to speech disabled (system=%s)", tts_system)
 
     # Dialogue Management
     dialogue_system = profile.get("dialogue.system", "dummy")
     if dialogue_system not in {"dummy", "hermes"}:
-        compose_dialogue(dialogue_system, profile, services, **mqtt_settings)
+        compose_dialogue(
+            dialogue_system,
+            profile,
+            services,
+            siteId=siteId,
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+        )
     else:
         _LOGGER.debug("Dialogue disabled (system=%s)", dialogue_system)
 
@@ -1350,7 +1440,6 @@ def compose_webserver(
     services: typing.Dict[str, typing.Any],
     mqtt_host: str,
     mqtt_port: int,
-    **kwargs,
 ):
     """Print command for Rhasspy web server (http://localhost:12101)"""
     web_command = [
