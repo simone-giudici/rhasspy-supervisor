@@ -401,11 +401,11 @@ def get_wake(
             "--port",
             str(mqtt_port),
             "--library",
-            shlex.quote(str(profile.read_path(library))),
+            shlex.quote(str(profile.write_path(library))),
             "--model",
-            shlex.quote(str(profile.read_path(model))),
+            shlex.quote(str(profile.write_path(model))),
             "--keyword",
-            shlex.quote(str(profile.read_path(keyword))),
+            shlex.quote(str(profile.write_path(keyword))),
             "--sensitivity",
             str(sensitivity),
         ]
@@ -449,7 +449,7 @@ def get_wake(
             if "apply_frontend" not in settings:
                 settings["apply_frontend"] = apply_frontend
 
-            model_path = profile.read_path(model_name)
+            model_path = profile.write_path(model_name)
             model_args = [
                 str(model_path),
                 str(settings["sensitivity"]),
@@ -481,9 +481,9 @@ def get_wake(
             "--keyphrase-threshold",
             str(profile.get("wake.pocketsphinx.threshold", "1e-40")),
             "--acoustic-model",
-            shlex.quote(str(profile.read_path(acoustic_model))),
+            shlex.quote(str(profile.write_path(acoustic_model))),
             "--dictionary",
-            shlex.quote(str(profile.read_path(dictionary))),
+            shlex.quote(str(profile.write_path(dictionary))),
             "--siteId",
             str(siteId),
             "--host",
@@ -495,7 +495,7 @@ def get_wake(
         mllr_matrix = profile.get("wake.pocketsphinx.mllr_matrix")
         if mllr_matrix:
             wake_command.extend(
-                ["--mllr-matrix", shlex.quote(str(profile.read_path(mllr_matrix)))]
+                ["--mllr-matrix", shlex.quote(str(profile.write_path(mllr_matrix)))]
             )
 
         return wake_command
@@ -555,8 +555,6 @@ def print_wake(
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for remote
-
 
 def get_speech_to_text(
     stt_system: str,
@@ -571,11 +569,21 @@ def get_speech_to_text(
         acoustic_model = profile.get("speech_to_text.pocketsphinx.acoustic_model")
         assert acoustic_model
 
-        dictionary = profile.get("speech_to_text.pocketsphinx.dictionary")
-        assert dictionary
+        open_transcription = bool(
+            profile.get("speech_to_text.pocketsphinx.open_transcription", False)
+        )
 
-        language_model = profile.get("speech_to_text.pocketsphinx.language_model")
-        assert language_model
+        if open_transcription:
+            dictionary = profile.get("speech_to_text.pocketsphinx.base_dictionary")
+            language_model = profile.get(
+                "speech_to_text.pocketsphinx.base_language_model"
+            )
+        else:
+            dictionary = profile.get("speech_to_text.pocketsphinx.dictionary")
+            language_model = profile.get("speech_to_text.pocketsphinx.language_model")
+
+        assert dictionary, "Dictionary required"
+        assert language_model, "Language model required"
 
         stt_command = [
             "rhasspy-asr-pocketsphinx-hermes",
@@ -587,12 +595,16 @@ def get_speech_to_text(
             "--port",
             str(mqtt_port),
             "--acoustic-model",
-            shlex.quote(str(profile.read_path(acoustic_model))),
+            shlex.quote(str(profile.write_path(acoustic_model))),
             "--dictionary",
-            shlex.quote(str(profile.read_path(dictionary))),
+            shlex.quote(str(profile.write_path(dictionary))),
             "--language-model",
-            shlex.quote(str(profile.read_path(language_model))),
+            shlex.quote(str(profile.write_path(language_model))),
         ]
+
+        if open_transcription:
+            # Don't overwrite dictionary or language model during training
+            stt_command.append("--no-overwrite-train")
 
         base_dictionary = profile.get("speech_to_text.pocketsphinx.base_dictionary")
         if base_dictionary:
@@ -629,6 +641,7 @@ def get_speech_to_text(
         if g2p_casing:
             stt_command.extend(["--g2p-casing", g2p_casing])
 
+        # Path to write missing words and guessed pronunciations
         unknown_words = profile.get("speech_to_text.pocketsphinx.unknown_words")
         if unknown_words:
             stt_command.extend(
@@ -643,8 +656,16 @@ def get_speech_to_text(
         assert model_dir
         model_dir = profile.write_path(model_dir)
 
-        graph = profile.get("speech_to_text.kaldi.graph")
-        assert graph
+        open_transcription = bool(
+            profile.get("speech_to_text.kaldi.open_transcription", False)
+        )
+
+        if open_transcription:
+            graph = profile.get("speech_to_text.kaldi.base_graph")
+        else:
+            graph = profile.get("speech_to_text.kaldi.graph")
+
+        assert graph, "Graph directory is required"
         graph = model_dir / graph
 
         stt_command = [
@@ -661,6 +682,10 @@ def get_speech_to_text(
             "--graph-dir",
             shlex.quote(str(graph)),
         ]
+
+        if open_transcription:
+            # Don't overwrite HCLG.fst during training
+            stt_command.append("--no-overwrite-train")
 
         base_dictionary = profile.get("speech_to_text.kaldi.base_dictionary")
         if base_dictionary:
@@ -696,6 +721,13 @@ def get_speech_to_text(
         g2p_casing = profile.get("speech_to_text.g2p_casing")
         if g2p_casing:
             stt_command.extend(["--g2p-casing", g2p_casing])
+
+        # Path to write missing words and guessed pronunciations
+        unknown_words = profile.get("speech_to_text.kaldi.unknown_words")
+        if unknown_words:
+            stt_command.extend(
+                ["--unknown-words", shlex.quote(str(profile.write_path(unknown_words)))]
+            )
 
         return stt_command
 

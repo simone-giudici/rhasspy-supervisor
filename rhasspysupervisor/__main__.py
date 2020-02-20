@@ -70,6 +70,7 @@ def main():
 
     # Convert to supervisord conf
     supervisord_conf_path = args.user_profiles / args.profile / args.supervisord_conf
+    supervisord_conf_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(supervisord_conf_path, "w") as conf_file:
         profile_to_conf(profile, conf_file, local_mqtt_port=args.local_mqtt_port)
@@ -78,6 +79,7 @@ def main():
 
     # Convert to docker compose
     docker_compose_path = args.user_profiles / args.profile / args.docker_compose
+    docker_compose_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(docker_compose_path, "w") as yml_file:
         profile_to_docker(profile, yml_file, local_mqtt_port=args.local_mqtt_port)
