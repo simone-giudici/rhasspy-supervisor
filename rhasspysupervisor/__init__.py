@@ -668,6 +668,9 @@ def get_speech_to_text(
         assert graph, "Graph directory is required"
         graph = model_dir / graph
 
+        model_type = profile.get("speech_to_text.kaldi.model_type")
+        assert model_type, "Model type is required"
+
         stt_command = [
             "rhasspy-asr-kaldi-hermes",
             "--debug",
@@ -677,6 +680,8 @@ def get_speech_to_text(
             str(mqtt_host),
             "--port",
             str(mqtt_port),
+            "--model-type",
+            str(model_type),
             "--model-dir",
             shlex.quote(str(model_dir)),
             "--graph-dir",
