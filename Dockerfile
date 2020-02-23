@@ -3,6 +3,10 @@ FROM ${BUILD_ARCH}/python:3.7-alpine as build
 ARG BUILD_ARCH
 ARG FRIENDLY_ARCH
 
+# Multi-arch
+COPY etc/qemu-arm-static /usr/bin/
+COPY etc/qemu-aarch64-static /usr/bin/
+
 RUN apk update && apk add --no-cache build-base
 RUN python3 -m venv /venv
 
@@ -23,6 +27,10 @@ ARG BUILD_ARCH
 FROM ${BUILD_ARCH}/python:3.7-alpine
 ARG BUILD_ARCH
 ARG FRIENDLY_ARCH
+
+# Multi-arch
+COPY etc/qemu-arm-static /usr/bin/
+COPY etc/qemu-aarch64-static /usr/bin/
 
 COPY --from=build /venv/ /venv/
 
