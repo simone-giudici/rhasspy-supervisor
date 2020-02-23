@@ -8,3 +8,4 @@ pyinstaller/
 .vscode/
 download/
 debian/rhasspy-supervisor*
+etc/qemu-*

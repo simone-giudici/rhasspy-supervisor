@@ -1,25 +1,32 @@
-ARG BUILD_ARCH=amd64
+ARG BUILD_ARCH
 FROM ${BUILD_ARCH}/python:3.7-alpine as build
+ARG BUILD_ARCH
+ARG FRIENDLY_ARCH
 
-RUN apk add --no-cache build-base
+RUN apk update && apk add --no-cache build-base
+RUN python3 -m venv /venv
 
-ENV VENV=/usr/.venv
+COPY requirements.txt /
 
-RUN python3 -m venv $VENV
-RUN $VENV/bin/pip3 install --upgrade pip
+RUN grep '^rhasspy-' /requirements.txt | \
+    sed -e 's|=.\+|/archive/master.tar.gz|' | \
+    sed 's|^|https://github.com/rhasspy/|' \
+    > /requirements_rhasspy.txt
 
-COPY requirements_rhasspy.txt requirements.txt /tmp/
-RUN $VENV/bin/pip3 install -r /tmp/requirements_rhasspy.txt
-RUN $VENV/bin/pip3 install -r /tmp/requirements.txt
+RUN /venv/bin/pip install --upgrade pip
+RUN /venv/bin/pip install -r /requirements_rhasspy.txt
+RUN /venv/bin/pip install -r /requirements.txt
 
 # -----------------------------------------------------------------------------
 
-ARG BUILD_ARCH=amd64
+ARG BUILD_ARCH
 FROM ${BUILD_ARCH}/python:3.7-alpine
+ARG BUILD_ARCH
+ARG FRIENDLY_ARCH
 
-WORKDIR /usr
-COPY --from=build /usr/.venv /usr/.venv/
+COPY --from=build /venv/ /venv/
 
-COPY **/*.py rhasspysupervisor/
+COPY rhasspysupervisor/ /rhasspysupervisor/
+WORKDIR /
 
-ENTRYPOINT ["/usr/.venv/bin/python3", "-m", "rhasspysupervisor"]
+ENTRYPOINT ["/venv/bin/python3", "-m", "rhasspysupervisor"]
