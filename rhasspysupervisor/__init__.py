@@ -1006,9 +1006,13 @@ def get_intent_handling(
             str(mqtt_host),
             "--port",
             str(mqtt_port),
-            "--hass-url",
+            "--url",
             shlex.quote(url),
         ]
+
+        handle_type = profile.get("home_assistant.handle_type")
+        if handle_type:
+            handle_command.extend(["--handle-type", str(handle_type)])
 
         # Additional options
         access_token = profile.get("home_assistant.access_token")
