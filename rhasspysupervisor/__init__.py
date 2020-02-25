@@ -408,6 +408,8 @@ def get_wake(
             shlex.quote(str(profile.write_path(keyword))),
             "--sensitivity",
             str(sensitivity),
+            "--keyword-dir",
+            shlex.quote(str(profile.write_path("porcupine"))),
         ]
 
         return wake_command
