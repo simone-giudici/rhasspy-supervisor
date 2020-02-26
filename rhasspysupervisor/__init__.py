@@ -424,6 +424,8 @@ def get_wake(
             str(mqtt_host),
             "--port",
             str(mqtt_port),
+            "--model-dir",
+            shlex.quote(str(profile.write_path("snowboy"))),
         ]
 
         # Default settings
