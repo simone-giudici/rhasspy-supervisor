@@ -1180,6 +1180,37 @@ def get_text_to_speech(
             str(mqtt_port),
             "--tts-command",
             shlex.quote(" ".join(str(v) for v in espeak_command)),
+            "--voices-command",
+            shlex.quote("espeak --voices | tail -n +2 | awk '{ print $2,$4 }'")
+        ]
+
+        return tts_command
+
+    if tts_system == "flite":
+        flite_command = ["flite", "-o", "/dev/stdout"]
+        voice = profile.get("text_to_speech.flite.voice", "").strip()
+
+        if voice:
+            flite_command.extend(["-voice", str(voice)])
+
+        flite_command.extend(profile.get("text_to_speech.flite.arguments", []))
+
+        # Text will be final argument
+        flite_command.append("-t")
+
+        tts_command = [
+            "rhasspy-tts-cli-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--tts-command",
+            shlex.quote(" ".join(str(v) for v in flite_command)),
+            "--voices-command",
+            shlex.quote("flite -lv | cut -d: -f 2- | tr ' ' '\\n'")
         ]
 
         return tts_command
