@@ -1181,7 +1181,7 @@ def get_text_to_speech(
             "--tts-command",
             shlex.quote(" ".join(str(v) for v in espeak_command)),
             "--voices-command",
-            shlex.quote("espeak --voices | tail -n +2 | awk '{ print $2,$4 }'")
+            shlex.quote("espeak --voices | tail -n +2 | awk '{ print $2,$4 }'"),
         ]
 
         return tts_command
@@ -1210,7 +1210,7 @@ def get_text_to_speech(
             "--tts-command",
             shlex.quote(" ".join(str(v) for v in flite_command)),
             "--voices-command",
-            shlex.quote("flite -lv | cut -d: -f 2- | tr ' ' '\\n'")
+            shlex.quote("flite -lv | cut -d: -f 2- | tr ' ' '\\n'"),
         ]
 
         return tts_command
