@@ -1147,7 +1147,7 @@ def print_dialogue(
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for flite, picotts, MaryTTS, Google, NanoTTS
+# TODO: Add support for Google, NanoTTS
 
 
 def get_text_to_speech(
@@ -1211,6 +1211,111 @@ def get_text_to_speech(
             shlex.quote(" ".join(str(v) for v in flite_command)),
             "--voices-command",
             shlex.quote("flite -lv | cut -d: -f 2- | tr ' ' '\\n'"),
+        ]
+
+        return tts_command
+
+    if tts_system == "picotts":
+        picotts_command = ["pico2wave", "-w", "$t", '"$0"']
+        language = profile.get("text_to_speech.picotts.language", "").strip()
+
+        if language:
+            picotts_command.extend(["-l", str(language)])
+
+        # pico2wave REALLY wants to write to a real file, so we have to wrap it
+        # in a small script to use a temporary one.
+        picotts_command_str = " ".join(str(v) for v in picotts_command)
+        bash_command = [
+            "bash",
+            "-c",
+            shlex.quote(
+                "t=$(mktemp --suffix .wav); function x() {{ rm -f $t; }}; trap x EXIT; "
+                + picotts_command_str + "; cat $t"
+            ),
+        ]
+
+        tts_command = [
+            "rhasspy-tts-cli-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--tts-command",
+            shlex.quote(" ".join(str(v) for v in bash_command)),
+        ]
+
+        return tts_command
+
+    if tts_system == "marytts":
+        url = profile.get("text_to_speech.marytts.url", "").strip()
+        assert url, "text_to_speech.marytts.url is required"
+
+        # Oh the things curl can do
+        locale = profile.get("text_to_speech.marytts.locale", "en-US").strip()
+        marytts_command = [
+            "curl",
+            "-sS",
+            "-X",
+            "GET",
+            "-G",
+            "--output",
+            "-",
+            "--data-urlencode",
+            "INPUT_TYPE=TEXT",
+            "--data-urlencode",
+            "OUTPUT_TYPE=AUDIO",
+            "--data-urlencode",
+            "AUDIO=WAVE",
+            "--data-urlencode",
+            shlex.quote(f"LOCALE={locale}"),
+            "--data-urlencode",
+            'INPUT_TEXT="$0"',
+            shlex.quote(url),
+        ]
+
+        voice = profile.get("text_to_speech.marytts.voice", "").strip()
+        if voice:
+            marytts_command.extend(["--data-urlencode", shlex.quote(f"VOICE={voice}")])
+
+        # Combine into bash call so we can pass input text as $0
+        bash_command = [
+            "bash",
+            "-c",
+            shlex.quote(" ".join(str(v) for v in marytts_command)),
+        ]
+
+        # localhost:59125/process -> localhost:59125
+        server_base_url = url
+        if server_base_url.endswith("/"):
+            server_base_url = server_base_url[:-1]
+
+        if server_base_url.endswith("/process"):
+            server_base_url = server_base_url[:-8]
+
+        voices_command = [
+            "curl",
+            "-sS",
+            "-X",
+            "GET",
+            shlex.quote(server_base_url + "/voices"),
+        ]
+
+        tts_command = [
+            "rhasspy-tts-cli-hermes",
+            "--debug",
+            "--siteId",
+            str(siteId),
+            "--host",
+            str(mqtt_host),
+            "--port",
+            str(mqtt_port),
+            "--tts-command",
+            shlex.quote(" ".join(str(v) for v in bash_command)),
+            "--voices-command",
+            shlex.quote(" ".join(str(v) for v in voices_command)),
         ]
 
         return tts_command
