@@ -1230,7 +1230,8 @@ def get_text_to_speech(
             "-c",
             shlex.quote(
                 "t=$(mktemp --suffix .wav); function x() {{ rm -f $t; }}; trap x EXIT; "
-                + picotts_command_str + "; cat $t"
+                + picotts_command_str
+                + "; cat $t"
             ),
         ]
 
