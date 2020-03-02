@@ -380,12 +380,6 @@ def get_wake(
 ) -> typing.List[str]:
     """Get command for wake system"""
     if wake_system == "porcupine":
-        library = profile.get("wake.porcupine.library_path")
-        assert library, "wake.porcupine.library_path required"
-
-        model = profile.get("wake.porcupine.model_path")
-        assert model, "wake.porcupine.model_path required"
-
         keyword = profile.get("wake.porcupine.keyword_path")
         assert keyword, "wake.porcupine.keyword_path required"
 
@@ -400,17 +394,16 @@ def get_wake(
             str(mqtt_host),
             "--port",
             str(mqtt_port),
-            "--library",
-            shlex.quote(str(profile.write_path(library))),
-            "--model",
-            shlex.quote(str(profile.write_path(model))),
             "--keyword",
             shlex.quote(str(profile.write_path(keyword))),
             "--sensitivity",
             str(sensitivity),
-            "--keyword-dir",
-            shlex.quote(str(profile.write_path("porcupine"))),
         ]
+
+        # Use porcupine dir in profile if it has any .ppn files
+        keyword_dir = profile.write_path("porcupine")
+        if keyword_dir.is_dir() and (len(list(keyword_dir.glob("*.ppn"))) > 0):
+            wake_command.extend(["--keyword-dir", shlex.quote(str(keyword_dir))])
 
         return wake_command
 
