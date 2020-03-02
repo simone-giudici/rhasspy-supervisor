@@ -402,8 +402,13 @@ def get_wake(
 
         # Use porcupine dir in profile if it has any .ppn files
         keyword_dir = profile.write_path("porcupine")
-        if keyword_dir.is_dir() and (len(list(keyword_dir.glob("*.ppn"))) > 0):
-            wake_command.extend(["--keyword-dir", shlex.quote(str(keyword_dir))])
+        if keyword_dir.is_dir():
+            for dir_file in keyword_dir.iterdir():
+                if dir_file.is_file() and (dir_file.suffix == ".ppn"):
+                    wake_command.extend(
+                        ["--keyword-dir", shlex.quote(str(keyword_dir))]
+                    )
+                    break
 
         return wake_command
 
@@ -417,8 +422,6 @@ def get_wake(
             str(mqtt_host),
             "--port",
             str(mqtt_port),
-            "--model-dir",
-            shlex.quote(str(profile.write_path("snowboy"))),
         ]
 
         # Default settings
@@ -426,8 +429,8 @@ def get_wake(
         audio_gain = float(profile.get("wake.snowboy.audio_gain", "1.0"))
         apply_frontend = bool(profile.get("wake.snowboy.apply_frontend", False))
 
-        model_names: typing.List[str] = profile.get(
-            "wake.snowboy.model", "snowboy/snowboy.umdl"
+        model_names: typing.List[str] = (
+            profile.get("wake.snowboy.model") or "snowboy.umdl"
         ).split(",")
 
         model_settings: typing.Dict[str, typing.Dict[str, typing.Any]] = profile.get(
@@ -446,14 +449,21 @@ def get_wake(
             if "apply_frontend" not in settings:
                 settings["apply_frontend"] = apply_frontend
 
-            model_path = profile.write_path(model_name)
             model_args = [
-                str(model_path),
+                shlex.quote(str(model_name)),
                 str(settings["sensitivity"]),
                 str(settings["audio_gain"]),
                 str(settings["apply_frontend"]),
             ]
             wake_command.extend(["--model"] + model_args)
+
+        # Use snowboy dir in profile if it has any .umdl or .pmdl files
+        model_dir = profile.write_path("snowboy")
+        if model_dir.is_dir():
+            for dir_file in model_dir.iterdir():
+                if dir_file.is_file() and (dir_file.suffix in [".umdl", ".pmdl"]):
+                    wake_command.extend(["--model-dir", shlex.quote(str(model_dir))])
+                    break
 
         return wake_command
 
@@ -838,7 +848,6 @@ def get_intent_recognition(
         graph = profile.get("intent.fsticuffs.intent_graph")
         assert graph, "Intent graph is required"
 
-        # TODO: Add fuzzy argument
         intent_command = [
             "rhasspy-nlu-hermes",
             "--debug",
@@ -851,6 +860,18 @@ def get_intent_recognition(
             "--intent-graph",
             shlex.quote(str(profile.write_path(graph))),
         ]
+
+        fuzzy = profile.get("intent.fsticuffs.fuzzy", True)
+        if not fuzzy:
+            intent_command.append("--no-fuzzy")
+
+        replace_numbers = profile.get("intent.replace_numbers", True)
+        if replace_numbers:
+            intent_command.append("--replace-numbers")
+
+            locale = profile.get("locale")
+            if locale:
+                intent_command.extend(["--language", str(locale)])
 
         # Case transformation
         if dictionary_casing:
@@ -879,6 +900,14 @@ def get_intent_recognition(
             "--examples",
             shlex.quote(str(profile.write_path(examples))),
         ]
+
+        replace_numbers = profile.get("intent.replace_numbers", True)
+        if replace_numbers:
+            intent_command.append("--replace-numbers")
+
+            locale = profile.get("locale")
+            if locale:
+                intent_command.extend(["--language", str(locale)])
 
         # Case transformation
         if dictionary_casing:
