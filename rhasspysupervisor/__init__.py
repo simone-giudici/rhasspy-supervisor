@@ -267,6 +267,10 @@ def get_microphone(
             shlex.quote(test_command),
         ]
 
+        output_siteId = profile.get("microphone.arecord.siteId", "")
+        if output_siteId:
+            mic_command.extend(["--output-siteId", shlex.quote(str(output_siteId))])
+
         return mic_command
 
     if mic_system == "pyaudio":
@@ -290,6 +294,10 @@ def get_microphone(
         mic_device = profile.get("microphone.pyaudio.device", "").strip()
         if mic_device:
             mic_command.extend(["--device-index", str(mic_device)])
+
+        output_siteId = profile.get("microphone.pyaudio.siteId", "")
+        if output_siteId:
+            mic_command.extend(["--output-siteId", shlex.quote(str(output_siteId))])
 
         return mic_command
 
