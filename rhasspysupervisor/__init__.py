@@ -538,6 +538,8 @@ def get_wake(
         if channels:
             wake_command.extend(["--wake-channels", str(channels)])
 
+        add_ssl_args(wake_command, profile)
+
         return wake_command
 
     raise ValueError(f"Unsupported wake system (got {wake_system})")
@@ -763,6 +765,8 @@ def get_speech_to_text(
             shlex.quote(" ".join(str(v) for v in user_command)),
         ]
 
+        add_ssl_args(stt_command, profile)
+
         # Training
         stt_train_system = profile.get("training.speech_to_text.system", "auto")
         if stt_train_system == "auto":
@@ -790,6 +794,8 @@ def get_speech_to_text(
             "--asr-url",
             shlex.quote(url),
         ]
+
+        add_ssl_args(stt_command, profile)
 
         # Training
         stt_train_system = profile.get("training.speech_to_text.system", "auto")
@@ -937,6 +943,8 @@ def get_intent_recognition(
         if dictionary_casing:
             intent_command.extend(["--casing", dictionary_casing])
 
+        add_ssl_args(intent_command, profile)
+
         # Training
         intent_train_system = profile.get("training.intent.system", "auto")
         if intent_train_system == "auto":
@@ -976,6 +984,8 @@ def get_intent_recognition(
         # Case transformation
         if dictionary_casing:
             intent_command.extend(["--casing", dictionary_casing])
+
+        add_ssl_args(intent_command, profile)
 
         # Training
         intent_train_system = profile.get("training.intent.system", "auto")
@@ -1076,6 +1086,8 @@ def get_intent_handling(
             shlex.quote(url),
         ]
 
+        add_ssl_args(handle_command, profile)
+
         return handle_command
 
     if handle_system == "command":
@@ -1095,6 +1107,8 @@ def get_intent_handling(
             "--handle-command",
             shlex.quote(" ".join(str(v) for v in user_command)),
         ]
+
+        add_ssl_args(handle_command, profile)
 
         return handle_command
 
@@ -1363,6 +1377,8 @@ def get_text_to_speech(
             shlex.quote(" ".join(str(v) for v in user_command)),
         ]
 
+        add_ssl_args(tts_command, profile)
+
         return tts_command
 
     if tts_system == "remote":
@@ -1381,6 +1397,8 @@ def get_text_to_speech(
             "--tts-url",
             shlex.quote(url),
         ]
+
+        add_ssl_args(tts_command, profile)
 
         return tts_command
 
@@ -1854,3 +1872,18 @@ def compose_speakers(
         "depends_on": ["mqtt"],
         "tty": True,
     }
+
+
+# -----------------------------------------------------------------------------
+
+
+def add_ssl_args(command: typing.List[str], profile: Profile):
+    """Add --certfile and --keyfile arguments."""
+    certfile = profile.get("home_assistant.pem_file")
+    keyfile = profile.get("home_assistant.key_file")
+
+    if certfile:
+        command.extend(["--certfile", shlex.quote(str(certfile))])
+
+    if keyfile:
+        command.extend(["--keyfile", shlex.quote(str(keyfile))])
