@@ -388,7 +388,7 @@ def get_wake(
 ) -> typing.List[str]:
     """Get command for wake system"""
     if wake_system == "porcupine":
-        keyword = profile.get("wake.porcupine.keyword_path")
+        keyword = profile.get("wake.porcupine.keyword_path") or "porcupine.ppn"
         assert keyword, "wake.porcupine.keyword_path required"
 
         sensitivity = profile.get("wake.porcupine.sensitivity", "0.5")
@@ -403,20 +403,12 @@ def get_wake(
             "--port",
             str(mqtt_port),
             "--keyword",
-            shlex.quote(str(profile.write_path(keyword))),
+            shlex.quote(str(keyword)),
             "--sensitivity",
             str(sensitivity),
+            "--keyword-dir",
+            shlex.quote(str(profile.write_path("porcupine"))),
         ]
-
-        # Use porcupine dir in profile if it has any .ppn files
-        keyword_dir = profile.write_path("porcupine")
-        if keyword_dir.is_dir():
-            for dir_file in keyword_dir.iterdir():
-                if dir_file.is_file() and (dir_file.suffix == ".ppn"):
-                    wake_command.extend(
-                        ["--keyword-dir", shlex.quote(str(keyword_dir))]
-                    )
-                    break
 
         return wake_command
 
@@ -430,6 +422,8 @@ def get_wake(
             str(mqtt_host),
             "--port",
             str(mqtt_port),
+            "--model-dir",
+            shlex.quote(str(profile.write_path("snowboy"))),
         ]
 
         # Default settings
@@ -464,14 +458,6 @@ def get_wake(
                 str(settings["apply_frontend"]),
             ]
             wake_command.extend(["--model"] + model_args)
-
-        # Use snowboy dir in profile if it has any .umdl or .pmdl files
-        model_dir = profile.write_path("snowboy")
-        if model_dir.is_dir():
-            for dir_file in model_dir.iterdir():
-                if dir_file.is_file() and (dir_file.suffix in [".umdl", ".pmdl"]):
-                    wake_command.extend(["--model-dir", shlex.quote(str(model_dir))])
-                    break
 
         return wake_command
 
