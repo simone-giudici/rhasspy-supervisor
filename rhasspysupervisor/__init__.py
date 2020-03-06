@@ -42,7 +42,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     mqtt_username = str(profile.get("mqtt.username", "")).strip()
     mqtt_password = str(profile.get("mqtt.password", "")).strip()
 
-    remote_mqtt = profile.get("mqtt.enabled", False)
+    remote_mqtt = str(profile.get("mqtt.enabled", False)).lower() == "true"
     if not remote_mqtt:
         # Use internal broker (mosquitto) on custom port
         mqtt_host = "localhost"
@@ -1531,7 +1531,7 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     mqtt_username = str(profile.get("mqtt.username", "")).strip()
     mqtt_password = str(profile.get("mqtt.password", "")).strip()
 
-    remote_mqtt = profile.get("mqtt.enabled", False)
+    remote_mqtt = str(profile.get("mqtt.enabled", False)).lower() == "true"
     if not remote_mqtt:
         # Use internal broker (mosquitto) on custom port
         mqtt_host = "mqtt"
