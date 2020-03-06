@@ -33,17 +33,22 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
 
     # MQTT
     siteId = str(profile.get("mqtt.site_id", "default"))
+    satellite_siteIds = str(profile.get("mqtt.satellite_site_ids", "")).split(",")
+    all_siteIds = [siteId] + satellite_siteIds
+
     mqtt_host = str(profile.get("mqtt.host", "localhost"))
     mqtt_port = int(profile.get("mqtt.port", 1883))
 
-    # mqtt_username = str(profile.get("mqtt.username", "")).strip()
-    # mqtt_password = str(profile.get("mqtt.password", "")).strip()
+    mqtt_username = str(profile.get("mqtt.username", "")).strip()
+    mqtt_password = str(profile.get("mqtt.password", "")).strip()
 
     remote_mqtt = profile.get("mqtt.enabled", False)
     if not remote_mqtt:
         # Use internal broker (mosquitto) on custom port
         mqtt_host = "localhost"
         mqtt_port = local_mqtt_port
+        mqtt_username = ""
+        mqtt_password = ""
         print_mqtt(out_file, mqtt_port=local_mqtt_port)
         write_boilerplate()
 
@@ -56,9 +61,11 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             mic_system,
             profile,
             out_file,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
         write_boilerplate()
     else:
@@ -71,9 +78,11 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             sound_system,
             profile,
             out_file,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
         write_boilerplate()
     else:
@@ -86,9 +95,11 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             wake_system,
             profile,
             out_file,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
         write_boilerplate()
     else:
@@ -101,9 +112,11 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             stt_system,
             profile,
             out_file,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
         write_boilerplate()
     else:
@@ -116,9 +129,11 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             intent_system,
             profile,
             out_file,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
         write_boilerplate()
     else:
@@ -131,9 +146,11 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             handle_system,
             profile,
             out_file,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
         write_boilerplate()
     else:
@@ -146,9 +163,11 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             tts_system,
             profile,
             out_file,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
         write_boilerplate()
     else:
@@ -161,9 +180,11 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             dialogue_system,
             profile,
             out_file,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
         write_boilerplate()
     else:
@@ -187,28 +208,28 @@ def print_mqtt(out_file: typing.TextIO, mqtt_port: int):
 # -----------------------------------------------------------------------------
 
 
-def print_webserver(
-    profile: Profile, out_file: typing.TextIO, mqtt_host: str, mqtt_port: int
+def add_standard_args(
+    command: typing.List[str],
+    siteIds: typing.List[str],
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
-    """Print command for Rhasspy web server (http://localhost:12101)"""
-    web_command = [
-        "rhasspy-server-hermes",
-        "--profile",
-        profile.name,
-        "--system-profiles",
-        str(profile.system_profiles_dir),
-        "--user-profiles",
-        str(profile.user_profiles_dir),
-        "--web-dir",
-        "web",
-        "--mqtt-host",
-        str(mqtt_host),
-        "--mqtt-port",
-        str(mqtt_port),
-    ]
+    """Add typical MQTT arguments to a command."""
+    command.append("--debug")
 
-    print("[program:web]", file=out_file)
-    print("command=", " ".join(web_command), sep="", file=out_file)
+    command.extend(["--host", str(mqtt_host)])
+    command.extend(["--port", str(mqtt_port)])
+
+    for siteId in siteIds:
+        siteId = siteId.strip()
+        if siteId:
+            command.extend(["--siteId", shlex.quote(str(siteId))])
+
+    if mqtt_username:
+        command.extend(["--username", shlex.quote(str(mqtt_username))])
+        command.extend(["--username", shlex.quote(str(mqtt_password))])
 
 
 # -----------------------------------------------------------------------------
@@ -219,9 +240,11 @@ def print_webserver(
 def get_microphone(
     mic_system: str,
     profile: Profile,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ) -> typing.List[str]:
     """Get command for microphone system"""
     if mic_system == "arecord":
@@ -246,13 +269,6 @@ def get_microphone(
 
         mic_command = [
             "rhasspy-microphone-cli-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--sample-rate",
             "16000",
             "--sample-width",
@@ -267,6 +283,14 @@ def get_microphone(
             shlex.quote(test_command),
         ]
 
+        add_standard_args(
+            mic_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
+
+        udp_audio_port = profile.get("microphone.arecord.udp_audio_port", "")
+        if udp_audio_port:
+            mic_command.extend(["--udp-audio-port", str(udp_audio_port)])
+
         output_siteId = profile.get("microphone.arecord.siteId", "")
         if output_siteId:
             mic_command.extend(["--output-siteId", shlex.quote(str(output_siteId))])
@@ -276,13 +300,6 @@ def get_microphone(
     if mic_system == "pyaudio":
         mic_command = [
             "rhasspy-microphone-pyaudio-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--sample-rate",
             "16000",
             "--sample-width",
@@ -291,6 +308,10 @@ def get_microphone(
             "1",
         ]
 
+        add_standard_args(
+            mic_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
+
         mic_device = profile.get("microphone.pyaudio.device", "").strip()
         if mic_device:
             mic_command.extend(["--device-index", str(mic_device)])
@@ -298,6 +319,10 @@ def get_microphone(
         output_siteId = profile.get("microphone.pyaudio.siteId", "")
         if output_siteId:
             mic_command.extend(["--output-siteId", shlex.quote(str(output_siteId))])
+
+        udp_audio_port = profile.get("microphone.pyaudio.udp_audio_port", "")
+        if udp_audio_port:
+            mic_command.extend(["--udp-audio-port", str(udp_audio_port)])
 
         return mic_command
 
@@ -311,13 +336,6 @@ def get_microphone(
 
         mic_command = [
             "rhasspy-microphone-cli-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--sample-rate",
             "16000",
             "--sample-width",
@@ -327,6 +345,10 @@ def get_microphone(
             "--record-command",
             shlex.quote(" ".join(record_command)),
         ]
+
+        add_standard_args(
+            mic_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         # Command to list available audio input devices
         list_program = profile.get("microphone.command.list_program")
@@ -361,13 +383,15 @@ def print_microphone(
     mic_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for microphone system"""
     mic_command = get_microphone(
-        mic_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        mic_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
 
     print("[program:microphone]", file=out_file)
@@ -382,9 +406,11 @@ def print_microphone(
 def get_wake(
     wake_system: str,
     profile: Profile,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ) -> typing.List[str]:
     """Get command for wake system"""
     if wake_system == "porcupine":
@@ -395,13 +421,6 @@ def get_wake(
 
         wake_command = [
             "rhasspy-wake-porcupine-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--keyword",
             shlex.quote(str(keyword)),
             "--sensitivity",
@@ -410,21 +429,30 @@ def get_wake(
             shlex.quote(str(profile.write_path("porcupine"))),
         ]
 
+        add_standard_args(
+            wake_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
+
+        udp_audio_port = profile.get("wake.porcupine.udp_audio_port", "")
+        if udp_audio_port:
+            wake_command.extend(["--udp-audio-port", str(udp_audio_port)])
+
         return wake_command
 
     if wake_system == "snowboy":
         wake_command = [
             "rhasspy-wake-snowboy-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--model-dir",
             shlex.quote(str(profile.write_path("snowboy"))),
         ]
+
+        add_standard_args(
+            wake_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
+
+        udp_audio_port = profile.get("wake.snowboy.udp_audio_port", "")
+        if udp_audio_port:
+            wake_command.extend(["--udp-audio-port", str(udp_audio_port)])
 
         # Default settings
         sensitivity = str(profile.get("wake.snowboy.sensitivity", "0.5"))
@@ -468,30 +496,33 @@ def get_wake(
         )
         assert acoustic_model, "acoustic model required"
 
-        dictionary = profile.get("wake.pocketsphinx.dictionary") or profile.get(
-            "speech_to_text.pocketsphinx.dictionary"
+        dictionary = (
+            profile.get("wake.pocketsphinx.dictionary")
+            or profile.get("speech_to_text.pocketsphinx.base_dictionary")
+            or profile.get("speech_to_text.pocketsphinx.dictionary")
         )
 
         assert dictionary, "dictionary required"
 
         wake_command = [
             "rhasspy-wake-pocketsphinx-hermes",
-            "--debug",
             "--keyphrase",
-            str(profile.get("wake.pocketsphinx.keyphrase", "okay raspy")),
+            shlex.quote(str(profile.get("wake.pocketsphinx.keyphrase", "okay raspy"))),
             "--keyphrase-threshold",
             str(profile.get("wake.pocketsphinx.threshold", "1e-40")),
             "--acoustic-model",
             shlex.quote(str(profile.write_path(acoustic_model))),
             "--dictionary",
             shlex.quote(str(profile.write_path(dictionary))),
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
         ]
+
+        add_standard_args(
+            wake_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
+
+        udp_audio_port = profile.get("wake.pocketsphinx.udp_audio_port", "")
+        if udp_audio_port:
+            wake_command.extend(["--udp-audio-port", str(udp_audio_port)])
 
         mllr_matrix = profile.get("wake.pocketsphinx.mllr_matrix")
         if mllr_matrix:
@@ -508,16 +539,13 @@ def get_wake(
 
         wake_command = [
             "rhasspy-remote-http-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--wake-command",
             shlex.quote(" ".join(str(v) for v in user_command)),
         ]
+
+        add_standard_args(
+            wake_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         # Audio format
         sample_rate = profile.get("wake.command.sample_rate")
@@ -543,13 +571,21 @@ def print_wake(
     wake_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for wake system"""
     wake_command = get_wake(
-        wake_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        wake_system,
+        profile,
+        siteIds,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
 
     print("[program:wake_word]", file=out_file)
@@ -562,9 +598,11 @@ def print_wake(
 def get_speech_to_text(
     stt_system: str,
     profile: Profile,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ) -> typing.List[str]:
     """Get command for speech to text system"""
     if stt_system == "pocketsphinx":
@@ -590,13 +628,6 @@ def get_speech_to_text(
 
         stt_command = [
             "rhasspy-asr-pocketsphinx-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--acoustic-model",
             shlex.quote(str(profile.write_path(acoustic_model))),
             "--dictionary",
@@ -604,6 +635,10 @@ def get_speech_to_text(
             "--language-model",
             shlex.quote(str(profile.write_path(language_model))),
         ]
+
+        add_standard_args(
+            stt_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         if open_transcription:
             # Don't overwrite dictionary or language model during training
@@ -676,13 +711,6 @@ def get_speech_to_text(
 
         stt_command = [
             "rhasspy-asr-kaldi-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--model-type",
             str(model_type),
             "--model-dir",
@@ -690,6 +718,10 @@ def get_speech_to_text(
             "--graph-dir",
             shlex.quote(str(graph)),
         ]
+
+        add_standard_args(
+            stt_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         if open_transcription:
             # Don't overwrite HCLG.fst during training
@@ -748,16 +780,13 @@ def get_speech_to_text(
 
         stt_command = [
             "rhasspy-remote-http-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--asr-command",
             shlex.quote(" ".join(str(v) for v in user_command)),
         ]
+
+        add_standard_args(
+            stt_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         add_ssl_args(stt_command, profile)
 
@@ -776,18 +805,11 @@ def get_speech_to_text(
         url = profile.get("speech_to_text.remote.url")
         assert url, "speech_to_text.remote.url is required"
 
-        stt_command = [
-            "rhasspy-remote-http-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-            "--asr-url",
-            shlex.quote(url),
-        ]
+        stt_command = ["rhasspy-remote-http-hermes", "--asr-url", shlex.quote(url)]
+
+        add_standard_args(
+            stt_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         add_ssl_args(stt_command, profile)
 
@@ -817,13 +839,15 @@ def print_speech_to_text(
     stt_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for speech to text system"""
     stt_command = get_speech_to_text(
-        stt_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        stt_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
     print("[program:speech_to_text]", file=out_file)
     print("command=", " ".join(stt_command), sep="", file=out_file)
@@ -837,9 +861,11 @@ def print_speech_to_text(
 def get_intent_recognition(
     intent_system: str,
     profile: Profile,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ) -> typing.List[str]:
     """Get command for intent recognition system"""
     dictionary_casing = profile.get("speech_to_text.dictionary_casing")
@@ -850,16 +876,13 @@ def get_intent_recognition(
 
         intent_command = [
             "rhasspy-nlu-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--intent-graph",
             shlex.quote(str(profile.write_path(graph))),
         ]
+
+        add_standard_args(
+            intent_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         fuzzy = profile.get("intent.fsticuffs.fuzzy", True)
         if not fuzzy:
@@ -888,18 +911,15 @@ def get_intent_recognition(
 
         intent_command = [
             "rhasspy-fuzzywuzzy-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--intent-graph",
             shlex.quote(str(profile.write_path(graph))),
             "--examples",
             shlex.quote(str(profile.write_path(examples))),
         ]
+
+        add_standard_args(
+            intent_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         replace_numbers = profile.get("intent.replace_numbers", True)
         if replace_numbers:
@@ -922,16 +942,13 @@ def get_intent_recognition(
 
         intent_command = [
             "rhasspy-remote-http-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--nlu-command",
             shlex.quote(" ".join(str(v) for v in user_command)),
         ]
+
+        add_standard_args(
+            intent_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         # Case transformation
         if dictionary_casing:
@@ -962,18 +979,11 @@ def get_intent_recognition(
         url = profile.get("intent.remote.url")
         assert url, "intent.remote.url is required"
 
-        intent_command = [
-            "rhasspy-remote-http-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-            "--nlu-url",
-            shlex.quote(url),
-        ]
+        intent_command = ["rhasspy-remote-http-hermes", "--nlu-url", shlex.quote(url)]
+
+        add_standard_args(
+            intent_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         # Case transformation
         if dictionary_casing:
@@ -999,13 +1009,21 @@ def print_intent_recognition(
     intent_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for intent recognition system"""
     intent_command = get_intent_recognition(
-        intent_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        intent_system,
+        profile,
+        siteIds,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
 
     print("[program:intent_recognition]", file=out_file)
@@ -1018,27 +1036,22 @@ def print_intent_recognition(
 def get_intent_handling(
     handle_system: str,
     profile: Profile,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Get command for intent handling system"""
     if handle_system == "hass":
         url = profile.get("home_assistant.url")
         assert url, "home_assistant.url is required"
 
-        handle_command = [
-            "rhasspy-homeassistant-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-            "--url",
-            shlex.quote(url),
-        ]
+        handle_command = ["rhasspy-homeassistant-hermes", "--url", shlex.quote(url)]
+
+        add_standard_args(
+            handle_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         handle_type = profile.get("home_assistant.handle_type")
         if handle_type:
@@ -1069,16 +1082,13 @@ def get_intent_handling(
 
         handle_command = [
             "rhasspy-remote-http-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--handle-url",
             shlex.quote(url),
         ]
+
+        add_standard_args(
+            handle_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         add_ssl_args(handle_command, profile)
 
@@ -1091,16 +1101,13 @@ def get_intent_handling(
 
         handle_command = [
             "rhasspy-remote-http-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--handle-command",
             shlex.quote(" ".join(str(v) for v in user_command)),
         ]
+
+        add_standard_args(
+            handle_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         add_ssl_args(handle_command, profile)
 
@@ -1113,13 +1120,21 @@ def print_intent_handling(
     handle_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for intent handling system"""
     handle_command = get_intent_handling(
-        handle_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        handle_system,
+        profile,
+        siteIds,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
 
     print("[program:intent_handling]", file=out_file)
@@ -1132,22 +1147,24 @@ def print_intent_handling(
 def get_dialogue(
     dialogue_system: str,
     profile: Profile,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ) -> typing.List[str]:
     """Get command for dialogue management system"""
     if dialogue_system == "rhasspy":
-        dialogue_command = [
-            "rhasspy-dialogue-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-        ]
+        dialogue_command = ["rhasspy-dialogue-hermes"]
+
+        add_standard_args(
+            dialogue_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
+        )
 
         return dialogue_command
 
@@ -1158,17 +1175,21 @@ def print_dialogue(
     dialogue_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for dialogue management system"""
     dialogue_command = get_dialogue(
         dialogue_system,
         profile,
-        siteId=siteId,
-        mqtt_host=mqtt_host,
-        mqtt_port=mqtt_port,
+        siteIds,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
 
     print("[program:dialogue]", file=out_file)
@@ -1183,9 +1204,11 @@ def print_dialogue(
 def get_text_to_speech(
     tts_system: str,
     profile: Profile,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Get command for text to speech system"""
     if tts_system == "espeak":
@@ -1201,18 +1224,15 @@ def get_text_to_speech(
 
         tts_command = [
             "rhasspy-tts-cli-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--tts-command",
             shlex.quote(" ".join(str(v) for v in espeak_command)),
             "--voices-command",
             shlex.quote("espeak --voices | tail -n +2 | awk '{ print $2,$4 }'"),
         ]
+
+        add_standard_args(
+            tts_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         return tts_command
 
@@ -1230,18 +1250,15 @@ def get_text_to_speech(
 
         tts_command = [
             "rhasspy-tts-cli-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--tts-command",
             shlex.quote(" ".join(str(v) for v in flite_command)),
             "--voices-command",
             shlex.quote("flite -lv | cut -d: -f 2- | tr ' ' '\\n'"),
         ]
+
+        add_standard_args(
+            tts_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         return tts_command
 
@@ -1267,16 +1284,13 @@ def get_text_to_speech(
 
         tts_command = [
             "rhasspy-tts-cli-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--tts-command",
             shlex.quote(" ".join(str(v) for v in bash_command)),
         ]
+
+        add_standard_args(
+            tts_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         return tts_command
 
@@ -1336,18 +1350,15 @@ def get_text_to_speech(
 
         tts_command = [
             "rhasspy-tts-cli-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--tts-command",
             shlex.quote(" ".join(str(v) for v in bash_command)),
             "--voices-command",
             shlex.quote(" ".join(str(v) for v in voices_command)),
         ]
+
+        add_standard_args(
+            tts_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         return tts_command
 
@@ -1360,16 +1371,13 @@ def get_text_to_speech(
 
         tts_command = [
             "rhasspy-remote-http-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--tts-command",
             shlex.quote(" ".join(str(v) for v in user_command)),
         ]
+
+        add_standard_args(
+            tts_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         add_ssl_args(tts_command, profile)
 
@@ -1379,18 +1387,11 @@ def get_text_to_speech(
         url = profile.get("text_to_speech.remote.url")
         assert url, "text_to_speech.remote.url is required"
 
-        tts_command = [
-            "rhasspy-remote-http-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
-            "--tts-url",
-            shlex.quote(url),
-        ]
+        tts_command = ["rhasspy-remote-http-hermes", "--tts-url", shlex.quote(url)]
+
+        add_standard_args(
+            tts_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         add_ssl_args(tts_command, profile)
 
@@ -1403,13 +1404,15 @@ def print_text_to_speech(
     tts_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for text to speech system"""
     tts_command = get_text_to_speech(
-        tts_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        tts_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
 
     print("[program:text_to_speech]", file=out_file)
@@ -1422,9 +1425,11 @@ def print_text_to_speech(
 def get_speakers(
     sound_system: str,
     profile: Profile,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ) -> typing.List[str]:
     """Get command for audio output system"""
     if sound_system == "aplay":
@@ -1436,18 +1441,15 @@ def get_speakers(
 
         output_command = [
             "rhasspy-speakers-cli-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--play-command",
             shlex.quote(" ".join(play_command)),
             "--list-command",
             shlex.quote(" ".join(list_command)),
         ]
+
+        add_standard_args(
+            output_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         return output_command
 
@@ -1459,16 +1461,13 @@ def get_speakers(
 
         output_command = [
             "rhasspy-speakers-cli-hermes",
-            "--debug",
-            "--siteId",
-            str(siteId),
-            "--host",
-            str(mqtt_host),
-            "--port",
-            str(mqtt_port),
             "--play-command",
             shlex.quote(" ".join(str(v) for v in play_command)),
         ]
+
+        add_standard_args(
+            output_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        )
 
         # Command to list available audio output devices
         list_program = profile.get("sounds.command.list_program")
@@ -1491,13 +1490,21 @@ def print_speakers(
     sound_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for audio output system"""
     output_command = get_speakers(
-        sound_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        sound_system,
+        profile,
+        siteIds,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
 
     print("[program:speakers]", file=out_file)
@@ -1515,17 +1522,22 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
 
     # MQTT
     siteId = str(profile.get("mqtt.site_id", "default"))
+    satellite_siteIds = str(profile.get("mqtt.satellite_site_ids", "")).split(",")
+    all_siteIds = [siteId] + satellite_siteIds
+
     mqtt_host = str(profile.get("mqtt.host", "localhost"))
     mqtt_port = int(profile.get("mqtt.port", 1883))
 
-    # mqtt_username = str(profile.get("mqtt.username", "")).strip()
-    # mqtt_password = str(profile.get("mqtt.password", "")).strip()
+    mqtt_username = str(profile.get("mqtt.username", "")).strip()
+    mqtt_password = str(profile.get("mqtt.password", "")).strip()
 
     remote_mqtt = profile.get("mqtt.enabled", False)
     if not remote_mqtt:
         # Use internal broker (mosquitto) on custom port
         mqtt_host = "mqtt"
         mqtt_host = local_mqtt_port
+        mqtt_username = ""
+        mqtt_password = ""
         compose_mqtt(services, mqtt_port=local_mqtt_port)
 
     # -------------------------------------------------------------------------
@@ -1537,9 +1549,11 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
             mic_system,
             profile,
             services,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
     else:
         _LOGGER.debug("Microphone disabled (system=%s)", mic_system)
@@ -1551,9 +1565,11 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
             sound_system,
             profile,
             services,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
     else:
         _LOGGER.debug("Speakers disabled (system=%s)", sound_system)
@@ -1565,9 +1581,11 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
             wake_system,
             profile,
             services,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
     else:
         _LOGGER.debug("Wake word disabled (system=%s)", wake_system)
@@ -1579,9 +1597,11 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
             stt_system,
             profile,
             services,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
     else:
         _LOGGER.debug("Speech to text disabled (system=%s)", stt_system)
@@ -1593,9 +1613,11 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
             intent_system,
             profile,
             services,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
     else:
         _LOGGER.debug("Intent recognition disabled (system=%s)", intent_system)
@@ -1607,9 +1629,11 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
             tts_system,
             profile,
             services,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
     else:
         _LOGGER.debug("Text to speech disabled (system=%s)", tts_system)
@@ -1621,9 +1645,11 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
             dialogue_system,
             profile,
             services,
-            siteId=siteId,
+            siteIds=all_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
         )
     else:
         _LOGGER.debug("Dialogue disabled (system=%s)", dialogue_system)
@@ -1651,51 +1677,19 @@ def compose_mqtt(services: typing.Dict[str, typing.Any], mqtt_port: int):
 # -----------------------------------------------------------------------------
 
 
-def compose_webserver(
-    profile: Profile,
-    services: typing.Dict[str, typing.Any],
-    mqtt_host: str,
-    mqtt_port: int,
-):
-    """Print command for Rhasspy web server (http://localhost:12101)"""
-    web_command = [
-        "--host",
-        "0.0.0.0",
-        "--profile",
-        profile.name,
-        "--user-profiles",
-        str(profile.user_profiles_dir),
-        "--web-dir",
-        "web",
-        "--mqtt-host",
-        str(mqtt_host),
-        "--mqtt-port",
-        str(mqtt_port),
-    ]
-    services["web"] = {
-        "image": "rhasspy/rhasspy-server-hermes",
-        "command": " ".join(web_command),
-        "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
-        "ports": ["12101:12101"],
-        "depends_on": ["mqtt"],
-        "tty": True,
-    }
-
-
-# -----------------------------------------------------------------------------
-
-
 def compose_microphone(
     mic_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for microphone system"""
     mic_command = get_microphone(
-        mic_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        mic_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
     service_name = mic_command.pop(0)
 
@@ -1717,13 +1711,21 @@ def compose_wake(
     wake_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for wake system"""
     wake_command = get_wake(
-        wake_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        wake_system,
+        profile,
+        siteIds,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
     service_name = wake_command.pop(0)
 
@@ -1743,13 +1745,15 @@ def compose_speech_to_text(
     stt_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for speech to text system"""
     stt_command = get_speech_to_text(
-        stt_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        stt_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
     service_name = stt_command.pop(0)
 
@@ -1769,13 +1773,21 @@ def compose_intent_recognition(
     intent_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for intent recognition system"""
     intent_command = get_intent_recognition(
-        intent_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        intent_system,
+        profile,
+        siteIds,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
     service_name = intent_command.pop(0)
 
@@ -1795,17 +1807,21 @@ def compose_dialogue(
     dialogue_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for dialogue management system"""
     dialogue_command = get_dialogue(
         dialogue_system,
         profile,
-        siteId=siteId,
-        mqtt_host=mqtt_host,
-        mqtt_port=mqtt_port,
+        siteIds,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
     service_name = dialogue_command.pop(0)
 
@@ -1824,13 +1840,15 @@ def compose_text_to_speech(
     tts_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for text to speech system"""
     tts_command = get_text_to_speech(
-        tts_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        tts_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
     service_name = tts_command.pop(0)
 
@@ -1849,13 +1867,21 @@ def compose_speakers(
     sound_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteId: str = "default",
+    siteIds: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
 ):
     """Print command for audio output system"""
     output_command = get_speakers(
-        sound_system, profile, siteId=siteId, mqtt_host=mqtt_host, mqtt_port=mqtt_port
+        sound_system,
+        profile,
+        siteIds,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
     service_name = output_command.pop(0)
 
