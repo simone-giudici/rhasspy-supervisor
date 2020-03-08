@@ -1263,11 +1263,14 @@ def get_text_to_speech(
         return tts_command
 
     if tts_system == "picotts":
-        picotts_command = ["pico2wave", "-w", "$t", '"$0"']
-        language = profile.get("text_to_speech.picotts.language", "").strip()
+        picotts_command = ["pico2wave",]
+        locale = profile.get("locale", "").strip()
 
-        if language:
-            picotts_command.extend(["-l", str(language)])
+        if locale:
+            locale = locale.replace("_", "-")
+            picotts_command.extend(["-l", str(locale)])
+
+        picotts_command.extend([ "-w", "$t", '"$0"'])
 
         # pico2wave REALLY wants to write to a real file, so we have to wrap it
         # in a small script to use a temporary one.
