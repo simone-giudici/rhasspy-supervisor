@@ -726,6 +726,21 @@ def get_speech_to_text(
         if open_transcription:
             # Don't overwrite HCLG.fst during training
             stt_command.append("--no-overwrite-train")
+        else:
+            dictionary = profile.get("speech_to_text.kaldi.dictionary")
+            if dictionary:
+                stt_command.extend(
+                    ["--dictionary", shlex.quote(str(profile.write_path(dictionary)))]
+                )
+
+            language_model = profile.get("speech_to_text.kaldi.language_model")
+            if language_model:
+                stt_command.extend(
+                    [
+                        "--language-model",
+                        shlex.quote(str(profile.write_path(language_model))),
+                    ]
+                )
 
         base_dictionary = profile.get("speech_to_text.kaldi.base_dictionary")
         if base_dictionary:
@@ -1263,14 +1278,14 @@ def get_text_to_speech(
         return tts_command
 
     if tts_system == "picotts":
-        picotts_command = ["pico2wave",]
+        picotts_command = ["pico2wave"]
         locale = profile.get("locale", "").strip()
 
         if locale:
             locale = locale.replace("_", "-")
             picotts_command.extend(["-l", str(locale)])
 
-        picotts_command.extend([ "-w", "$t", '"$0"'])
+        picotts_command.extend(["-w", "$t", '"$0"'])
 
         # pico2wave REALLY wants to write to a real file, so we have to wrap it
         # in a small script to use a temporary one.
