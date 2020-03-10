@@ -8,8 +8,6 @@ from rhasspyprofile import Profile
 
 _LOGGER = logging.getLogger(__name__)
 
-# TODO: Add support for "command" systems
-
 # -----------------------------------------------------------------------------
 # supervisord
 # -----------------------------------------------------------------------------
@@ -32,9 +30,9 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     print("", file=out_file)
 
     # MQTT
-    siteId = str(profile.get("mqtt.site_id", "default"))
+    master_siteIds = str(profile.get("mqtt.site_id", "default")).split(",")
     satellite_siteIds = str(profile.get("mqtt.satellite_site_ids", "")).split(",")
-    all_siteIds = [siteId] + satellite_siteIds
+    all_siteIds = master_siteIds + satellite_siteIds
 
     mqtt_host = str(profile.get("mqtt.host", "localhost"))
     mqtt_port = int(profile.get("mqtt.port", 1883))
@@ -55,13 +53,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # -------------------------------------------------------------------------
 
     # Microphone
+    # NOTE: Satellite siteIds are not used
     mic_system = profile.get("microphone.system", "dummy")
     if mic_system not in {"dummy", "hermes"}:
         print_microphone(
             mic_system,
             profile,
             out_file,
-            siteIds=all_siteIds,
+            siteIds=master_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -72,13 +71,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
         _LOGGER.debug("Microphone disabled (system=%s)", mic_system)
 
     # Speakers
+    # NOTE: Satellite siteIds are not used
     sound_system = profile.get("sounds.system", "dummy")
     if sound_system not in {"dummy", "hermes"}:
         print_speakers(
             sound_system,
             profile,
             out_file,
-            siteIds=all_siteIds,
+            siteIds=master_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -1521,9 +1521,9 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     services: typing.Dict[str, typing.Any] = {}
 
     # MQTT
-    siteId = str(profile.get("mqtt.site_id", "default"))
+    master_siteIds = str(profile.get("mqtt.site_id", "default")).split(",")
     satellite_siteIds = str(profile.get("mqtt.satellite_site_ids", "")).split(",")
-    all_siteIds = [siteId] + satellite_siteIds
+    all_siteIds = master_siteIds + satellite_siteIds
 
     mqtt_host = str(profile.get("mqtt.host", "localhost"))
     mqtt_port = int(profile.get("mqtt.port", 1883))
@@ -1543,13 +1543,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # -------------------------------------------------------------------------
 
     # Microphone
+    # NOTE: Satellite siteIds are not used
     mic_system = profile.get("microphone.system", "dummy")
     if mic_system not in {"dummy", "hermes"}:
         compose_microphone(
             mic_system,
             profile,
             services,
-            siteIds=all_siteIds,
+            siteIds=master_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -1559,13 +1560,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
         _LOGGER.debug("Microphone disabled (system=%s)", mic_system)
 
     # Speakers
+    # NOTE: Satellite siteIds are not used
     sound_system = profile.get("sounds.system", "dummy")
     if sound_system not in {"dummy", "hermes"}:
         compose_speakers(
             sound_system,
             profile,
             services,
-            siteIds=all_siteIds,
+            siteIds=master_siteIds,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
