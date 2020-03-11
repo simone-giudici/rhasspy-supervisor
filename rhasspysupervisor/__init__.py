@@ -202,6 +202,24 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     else:
         _LOGGER.debug("Dialogue disabled (system=%s)", dialogue_system)
 
+    # Webhooks
+    webhooks = profile.get("webhooks", {})
+    if webhooks:
+        satellite_siteIds = str(profile.get("webhooks.satellite_site_ids", "")).split(
+            ","
+        )
+        print_webhooks(
+            webhooks,
+            profile,
+            out_file,
+            siteIds=(master_siteIds + satellite_siteIds),
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
+        )
+        write_boilerplate()
+
 
 # -----------------------------------------------------------------------------
 
@@ -1542,6 +1560,71 @@ def print_speakers(
 
 
 # -----------------------------------------------------------------------------
+
+
+def get_webhooks(
+    webhooks: typing.Dict[str, typing.Any],
+    profile: Profile,
+    siteIds: typing.List[str],
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
+) -> typing.List[str]:
+    """Get command for webhooks"""
+    webhook_command = ["rhasspy-remote-http-hermes"]
+
+    add_standard_args(
+        webhook_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+    )
+
+    add_ssl_args(webhook_command, profile)
+
+    # Parse MQTT topics and urls
+    topics_urls: typing.List[typing.Tuple[str, str]] = []
+    for key, values in webhooks.items():
+        if key == "awake":
+            # Intepret has hotword detected event for all wakewordIds
+            if isinstance(values, str):
+                # Allow string or list of strings
+                values = [values]
+
+            topics_urls.extend(("hermes/hotword/+/detected", url) for url in values)
+        elif key == "mqtt":
+            # values is a dictionary with topic -> urls
+            for topic, urls in values.items():
+                if isinstance(urls, str):
+                    # Allow string or list of strings
+                    urls = [urls]
+
+                topics_urls.extend((topic, url) for url in urls)
+
+    for topic, url in topics_urls:
+        webhook_command.extend(["--webhook", shlex.quote(topic), shlex.quote(url)])
+
+    return webhook_command
+
+
+def print_webhooks(
+    webhooks: typing.Dict[str, typing.Any],
+    profile: Profile,
+    out_file: typing.TextIO,
+    siteIds: typing.List[str],
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
+):
+    """Print command for webhooks"""
+    webhook_command = get_webhooks(
+        webhooks, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+    )
+
+    print("[program:webhooks]", file=out_file)
+    print("command=", " ".join(webhook_command), sep="", file=out_file)
+
+
+# -----------------------------------------------------------------------------
 # docker compose
 # -----------------------------------------------------------------------------
 
@@ -1696,6 +1779,23 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
         )
     else:
         _LOGGER.debug("Dialogue disabled (system=%s)", dialogue_system)
+
+    # Webhooks
+    webhooks = profile.get("webhooks", {})
+    if webhooks:
+        satellite_siteIds = str(profile.get("webhooks.satellite_site_ids", "")).split(
+            ","
+        )
+        compose_webhooks(
+            webhooks,
+            profile,
+            services,
+            siteIds=(master_siteIds + satellite_siteIds),
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+            mqtt_username=mqtt_username,
+            mqtt_password=mqtt_password,
+        )
 
     # Output
     yaml_dict = {"version": "2", "services": services}
@@ -1932,6 +2032,33 @@ def compose_speakers(
         "image": f"rhasspy/{service_name}",
         "command": " ".join(output_command),
         "devices": ["/dev/snd"],
+        "depends_on": ["mqtt"],
+        "tty": True,
+    }
+
+
+# -----------------------------------------------------------------------------
+
+
+def compose_webhooks(
+    webhooks: typing.Dict[str, typing.Any],
+    profile: Profile,
+    services: typing.Dict[str, typing.Any],
+    siteIds: typing.List[str],
+    mqtt_host: str = "localhost",
+    mqtt_port: int = 1883,
+    mqtt_username: str = "",
+    mqtt_password: str = "",
+):
+    """Print command for webhooks"""
+    webhook_command = get_webhooks(
+        webhooks, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+    )
+    service_name = webhook_command.pop(0)
+
+    services["webhooks"] = {
+        "image": f"rhasspy/{service_name}",
+        "command": " ".join(webhook_command),
         "depends_on": ["mqtt"],
         "tty": True,
     }
