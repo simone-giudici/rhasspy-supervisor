@@ -2,6 +2,7 @@
 import logging
 import shlex
 import typing
+from pathlib import Path
 
 import yaml
 from rhasspyprofile import Profile
@@ -456,7 +457,7 @@ def get_wake(
             "--sensitivity",
             str(sensitivity),
             "--keyword-dir",
-            shlex.quote(str(profile.write_path("porcupine"))),
+            shlex.quote(str(write_path(profile, "porcupine"))),
         ]
 
         add_standard_args(
@@ -473,7 +474,7 @@ def get_wake(
         wake_command = [
             "rhasspy-wake-snowboy-hermes",
             "--model-dir",
-            shlex.quote(str(profile.write_path("snowboy"))),
+            shlex.quote(str(write_path(profile, "snowboy"))),
         ]
 
         add_standard_args(
@@ -541,9 +542,9 @@ def get_wake(
             "--keyphrase-threshold",
             str(profile.get("wake.pocketsphinx.threshold", "1e-40")),
             "--acoustic-model",
-            shlex.quote(str(profile.write_path(acoustic_model))),
+            shlex.quote(str(write_path(profile, acoustic_model))),
             "--dictionary",
-            shlex.quote(str(profile.write_path(dictionary))),
+            shlex.quote(str(write_path(profile, dictionary))),
         ]
 
         add_standard_args(
@@ -557,7 +558,7 @@ def get_wake(
         mllr_matrix = profile.get("wake.pocketsphinx.mllr_matrix")
         if mllr_matrix:
             wake_command.extend(
-                ["--mllr-matrix", shlex.quote(str(profile.write_path(mllr_matrix)))]
+                ["--mllr-matrix", shlex.quote(str(write_path(profile, mllr_matrix)))]
             )
 
         return wake_command
@@ -659,11 +660,11 @@ def get_speech_to_text(
         stt_command = [
             "rhasspy-asr-pocketsphinx-hermes",
             "--acoustic-model",
-            shlex.quote(str(profile.write_path(acoustic_model))),
+            shlex.quote(str(write_path(profile, acoustic_model))),
             "--dictionary",
-            shlex.quote(str(profile.write_path(dictionary))),
+            shlex.quote(str(write_path(profile, dictionary))),
             "--language-model",
-            shlex.quote(str(profile.write_path(language_model))),
+            shlex.quote(str(write_path(profile, language_model))),
         ]
 
         add_standard_args(
@@ -679,7 +680,7 @@ def get_speech_to_text(
             stt_command.extend(
                 [
                     "--base-dictionary",
-                    shlex.quote(str(profile.write_path(base_dictionary))),
+                    shlex.quote(str(write_path(profile, base_dictionary))),
                 ]
             )
 
@@ -688,7 +689,7 @@ def get_speech_to_text(
             stt_command.extend(
                 [
                     "--base-dictionary",
-                    shlex.quote(str(profile.write_path(custom_words))),
+                    shlex.quote(str(write_path(profile, custom_words))),
                 ]
             )
 
@@ -701,7 +702,7 @@ def get_speech_to_text(
         g2p_model = profile.get("speech_to_text.pocketsphinx.g2p_model")
         if g2p_model:
             stt_command.extend(
-                ["--g2p-model", shlex.quote(str(profile.write_path(g2p_model)))]
+                ["--g2p-model", shlex.quote(str(write_path(profile, g2p_model)))]
             )
 
         # Case transformation for grapheme-to-phoneme model
@@ -713,7 +714,10 @@ def get_speech_to_text(
         unknown_words = profile.get("speech_to_text.pocketsphinx.unknown_words")
         if unknown_words:
             stt_command.extend(
-                ["--unknown-words", shlex.quote(str(profile.write_path(unknown_words)))]
+                [
+                    "--unknown-words",
+                    shlex.quote(str(write_path(profile, unknown_words))),
+                ]
             )
 
         return stt_command
@@ -722,7 +726,7 @@ def get_speech_to_text(
         # Kaldi
         model_dir = profile.get("speech_to_text.kaldi.model_dir")
         assert model_dir
-        model_dir = profile.write_path(model_dir)
+        model_dir = write_path(profile, model_dir)
 
         open_transcription = bool(
             profile.get("speech_to_text.kaldi.open_transcription", False)
@@ -760,7 +764,7 @@ def get_speech_to_text(
             dictionary = profile.get("speech_to_text.kaldi.dictionary")
             if dictionary:
                 stt_command.extend(
-                    ["--dictionary", shlex.quote(str(profile.write_path(dictionary)))]
+                    ["--dictionary", shlex.quote(str(write_path(profile, dictionary)))]
                 )
 
             language_model = profile.get("speech_to_text.kaldi.language_model")
@@ -768,7 +772,7 @@ def get_speech_to_text(
                 stt_command.extend(
                     [
                         "--language-model",
-                        shlex.quote(str(profile.write_path(language_model))),
+                        shlex.quote(str(write_path(profile, language_model))),
                     ]
                 )
 
@@ -777,7 +781,7 @@ def get_speech_to_text(
             stt_command.extend(
                 [
                     "--base-dictionary",
-                    shlex.quote(str(profile.write_path(base_dictionary))),
+                    shlex.quote(str(write_path(profile, base_dictionary))),
                 ]
             )
 
@@ -786,7 +790,7 @@ def get_speech_to_text(
             stt_command.extend(
                 [
                     "--base-dictionary",
-                    shlex.quote(str(profile.write_path(custom_words))),
+                    shlex.quote(str(write_path(profile, custom_words))),
                 ]
             )
 
@@ -799,7 +803,7 @@ def get_speech_to_text(
         g2p_model = profile.get("speech_to_text.kaldi.g2p_model")
         if g2p_model:
             stt_command.extend(
-                ["--g2p-model", shlex.quote(str(profile.write_path(g2p_model)))]
+                ["--g2p-model", shlex.quote(str(write_path(profile, g2p_model)))]
             )
 
         # Case transformation for grapheme-to-phoneme model
@@ -811,7 +815,10 @@ def get_speech_to_text(
         unknown_words = profile.get("speech_to_text.kaldi.unknown_words")
         if unknown_words:
             stt_command.extend(
-                ["--unknown-words", shlex.quote(str(profile.write_path(unknown_words)))]
+                [
+                    "--unknown-words",
+                    shlex.quote(str(write_path(profile, unknown_words))),
+                ]
             )
 
         return stt_command
@@ -922,7 +929,7 @@ def get_intent_recognition(
         intent_command = [
             "rhasspy-nlu-hermes",
             "--intent-graph",
-            shlex.quote(str(profile.write_path(graph))),
+            shlex.quote(str(write_path(profile, graph))),
         ]
 
         add_standard_args(
@@ -957,9 +964,9 @@ def get_intent_recognition(
         intent_command = [
             "rhasspy-fuzzywuzzy-hermes",
             "--intent-graph",
-            shlex.quote(str(profile.write_path(graph))),
+            shlex.quote(str(write_path(profile, graph))),
             "--examples",
-            shlex.quote(str(profile.write_path(examples))),
+            shlex.quote(str(write_path(profile, examples))),
         ]
 
         add_standard_args(
@@ -2077,3 +2084,10 @@ def add_ssl_args(command: typing.List[str], profile: Profile):
 
     if keyfile:
         command.extend(["--keyfile", shlex.quote(str(keyfile))])
+
+
+# -----------------------------------------------------------------------------
+
+
+def write_path(profile: Profile, *path_parts) -> Path:
+    return profile.user_profiles_dir.joinpath(profile.name, *path_parts)
