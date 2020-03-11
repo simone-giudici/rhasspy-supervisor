@@ -528,13 +528,12 @@ def get_wake(
         )
         assert acoustic_model, "acoustic model required"
 
-        dictionary = (
-            profile.get("wake.pocketsphinx.dictionary")
-            or profile.get("speech_to_text.pocketsphinx.base_dictionary")
-            or profile.get("speech_to_text.pocketsphinx.dictionary")
-        )
-
-        assert dictionary, "dictionary required"
+        dictionaries = [
+            profile.get("wake.pocketsphinx.dictionary"),
+            profile.get("speech_to_text.pocketsphinx.base_dictionary"),
+            profile.get("speech_to_text.pocketsphinx.dictionary"),
+            profile.get("speech_to_text.pocketsphinx.custom_words"),
+        ]
 
         wake_command = [
             "rhasspy-wake-pocketsphinx-hermes",
@@ -544,9 +543,13 @@ def get_wake(
             str(profile.get("wake.pocketsphinx.threshold", "1e-40")),
             "--acoustic-model",
             shlex.quote(str(write_path(profile, acoustic_model))),
-            "--dictionary",
-            shlex.quote(str(write_path(profile, dictionary))),
         ]
+
+        for dictionary in dictionaries:
+            if dictionary:
+                wake_command.extend(
+                    ["--dictionary", shlex.quote(str(write_path(profile, dictionary)))]
+                )
 
         add_standard_args(
             wake_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
