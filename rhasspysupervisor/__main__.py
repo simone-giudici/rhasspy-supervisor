@@ -7,7 +7,7 @@ from rhasspyprofile import Profile
 
 from . import profile_to_conf, profile_to_docker
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger("rhasspysupervisor")
 
 # -----------------------------------------------------------------------------
 
@@ -69,22 +69,26 @@ def main():
     profile = Profile(args.profile, args.system_profiles, args.user_profiles)
 
     # Convert to supervisord conf
-    supervisord_conf_path = args.user_profiles / args.profile / args.supervisord_conf
-    supervisord_conf_path.parent.mkdir(parents=True, exist_ok=True)
+    if args.supervisord_conf:
+        supervisord_conf_path = args.user_profiles / args.profile / args.supervisord_conf
+        supervisord_conf_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(supervisord_conf_path, "w") as conf_file:
-        profile_to_conf(profile, conf_file, local_mqtt_port=args.local_mqtt_port)
+        _LOGGER.debug("Generating supervisord conf")
+        with open(supervisord_conf_path, "w") as conf_file:
+            profile_to_conf(profile, conf_file, local_mqtt_port=args.local_mqtt_port)
 
-    _LOGGER.debug("Wrote %s", str(supervisord_conf_path))
+        _LOGGER.debug("Wrote %s", str(supervisord_conf_path))
 
     # Convert to docker compose
-    docker_compose_path = args.user_profiles / args.profile / args.docker_compose
-    docker_compose_path.parent.mkdir(parents=True, exist_ok=True)
+    if args.docker_compose:
+        docker_compose_path = args.user_profiles / args.profile / args.docker_compose
+        docker_compose_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(docker_compose_path, "w") as yml_file:
-        profile_to_docker(profile, yml_file, local_mqtt_port=args.local_mqtt_port)
+        _LOGGER.debug("Generating docker compose YAML")
+        with open(docker_compose_path, "w") as yml_file:
+            profile_to_docker(profile, yml_file, local_mqtt_port=args.local_mqtt_port)
 
-    _LOGGER.debug("Wrote %s", str(docker_compose_path))
+        _LOGGER.debug("Wrote %s", str(docker_compose_path))
 
 
 # -----------------------------------------------------------------------------

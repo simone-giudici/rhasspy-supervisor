@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 from rhasspyprofile import Profile
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger("rhasspysupervisor")
 
 # -----------------------------------------------------------------------------
 # supervisord
