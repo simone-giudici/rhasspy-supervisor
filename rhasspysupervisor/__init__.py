@@ -31,8 +31,6 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
 
     # MQTT
     master_siteIds = str(profile.get("mqtt.site_id", "default")).split(",")
-    satellite_siteIds = str(profile.get("mqtt.satellite_site_ids", "")).split(",")
-    all_siteIds = master_siteIds + satellite_siteIds
 
     mqtt_host = str(profile.get("mqtt.host", "localhost"))
     mqtt_port = int(profile.get("mqtt.port", 1883))
@@ -53,14 +51,16 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # -------------------------------------------------------------------------
 
     # Microphone
-    # NOTE: Satellite siteIds are not used
     mic_system = profile.get("microphone.system", "dummy")
     if mic_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(profile.get("microphone.satellite_site_ids", "")).split(
+            ","
+        )
         print_microphone(
             mic_system,
             profile,
             out_file,
-            siteIds=master_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -71,14 +71,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
         _LOGGER.debug("Microphone disabled (system=%s)", mic_system)
 
     # Speakers
-    # NOTE: Satellite siteIds are not used
     sound_system = profile.get("sounds.system", "dummy")
     if sound_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(profile.get("sounds.satellite_site_ids", "")).split(",")
         print_speakers(
             sound_system,
             profile,
             out_file,
-            siteIds=master_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -91,11 +91,12 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Wake Word
     wake_system = profile.get("wake.system", "dummy")
     if wake_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(profile.get("wake.satellite_site_ids", "")).split(",")
         print_wake(
             wake_system,
             profile,
             out_file,
-            siteIds=all_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -108,11 +109,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Speech to Text
     stt_system = profile.get("speech_to_text.system", "dummy")
     if stt_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(
+            profile.get("speech_to_text.satellite_site_ids", "")
+        ).split(",")
         print_speech_to_text(
             stt_system,
             profile,
             out_file,
-            siteIds=all_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -125,11 +129,12 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Intent Recognition
     intent_system = profile.get("intent.system", "dummy")
     if intent_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(profile.get("intent.satellite_site_ids", "")).split(",")
         print_intent_recognition(
             intent_system,
             profile,
             out_file,
-            siteIds=all_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -142,11 +147,12 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Intent Handling
     handle_system = profile.get("handle.system", "dummy")
     if handle_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(profile.get("handle.satellite_site_ids", "")).split(",")
         print_intent_handling(
             handle_system,
             profile,
             out_file,
-            siteIds=all_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -159,11 +165,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Text to Speech
     tts_system = profile.get("text_to_speech.system", "dummy")
     if tts_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(
+            profile.get("text_to_speech.satellite_site_ids", "")
+        ).split(",")
         print_text_to_speech(
             tts_system,
             profile,
             out_file,
-            siteIds=all_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -176,11 +185,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Dialogue Management
     dialogue_system = profile.get("dialogue.system", "dummy")
     if dialogue_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(profile.get("dialogue.satellite_site_ids", "")).split(
+            ","
+        )
         print_dialogue(
             dialogue_system,
             profile,
             out_file,
-            siteIds=all_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -1540,8 +1552,6 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
 
     # MQTT
     master_siteIds = str(profile.get("mqtt.site_id", "default")).split(",")
-    satellite_siteIds = str(profile.get("mqtt.satellite_site_ids", "")).split(",")
-    all_siteIds = master_siteIds + satellite_siteIds
 
     mqtt_host = str(profile.get("mqtt.host", "localhost"))
     mqtt_port = int(profile.get("mqtt.port", 1883))
@@ -1561,14 +1571,16 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # -------------------------------------------------------------------------
 
     # Microphone
-    # NOTE: Satellite siteIds are not used
     mic_system = profile.get("microphone.system", "dummy")
     if mic_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(profile.get("microphone.satellite_site_ids", "")).split(
+            ","
+        )
         compose_microphone(
             mic_system,
             profile,
             services,
-            siteIds=master_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -1578,14 +1590,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
         _LOGGER.debug("Microphone disabled (system=%s)", mic_system)
 
     # Speakers
-    # NOTE: Satellite siteIds are not used
     sound_system = profile.get("sounds.system", "dummy")
     if sound_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(profile.get("sounds.satellite_site_ids", "")).split(",")
         compose_speakers(
             sound_system,
             profile,
             services,
-            siteIds=master_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -1597,11 +1609,12 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Wake Word
     wake_system = profile.get("wake.system", "dummy")
     if wake_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(profile.get("wake.satellite_site_ids", "")).split(",")
         compose_wake(
             wake_system,
             profile,
             services,
-            siteIds=all_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -1613,11 +1626,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Speech to Text
     stt_system = profile.get("speech_to_text.system", "dummy")
     if stt_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(
+            profile.get("speech_to_text.satellite_site_ids", "")
+        ).split(",")
         compose_speech_to_text(
             stt_system,
             profile,
             services,
-            siteIds=all_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -1629,11 +1645,12 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Intent Recognition
     intent_system = profile.get("intent.system", "dummy")
     if intent_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(profile.get("intent.satellite_site_ids", "")).split(",")
         compose_intent_recognition(
             intent_system,
             profile,
             services,
-            siteIds=all_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -1645,11 +1662,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Text to Speech
     tts_system = profile.get("text_to_speech.system", "dummy")
     if tts_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(
+            profile.get("text_to_speech.satellite_site_ids", "")
+        ).split(",")
         compose_text_to_speech(
             tts_system,
             profile,
             services,
-            siteIds=all_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -1661,11 +1681,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Dialogue Management
     dialogue_system = profile.get("dialogue.system", "dummy")
     if dialogue_system not in {"dummy", "hermes"}:
+        satellite_siteIds = str(profile.get("dialogue.satellite_site_ids", "")).split(
+            ","
+        )
         compose_dialogue(
             dialogue_system,
             profile,
             services,
-            siteIds=all_siteIds,
+            siteIds=(master_siteIds + satellite_siteIds),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
