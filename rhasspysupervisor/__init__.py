@@ -2091,4 +2091,5 @@ def add_ssl_args(command: typing.List[str], profile: Profile):
 
 
 def write_path(profile: Profile, *path_parts) -> Path:
+    """Get user writable path in profile."""
     return profile.user_profiles_dir.joinpath(profile.name, *path_parts)

@@ -70,7 +70,9 @@ def main():
 
     # Convert to supervisord conf
     if args.supervisord_conf:
-        supervisord_conf_path = args.user_profiles / args.profile / args.supervisord_conf
+        supervisord_conf_path = (
+            args.user_profiles / args.profile / args.supervisord_conf
+        )
         supervisord_conf_path.parent.mkdir(parents=True, exist_ok=True)
 
         _LOGGER.debug("Generating supervisord conf")
