@@ -436,9 +436,13 @@ def get_microphone(
         port = profile.get("microphone.udpraw.port")
         assert port, "microphone.udpraw.port is required"
 
-        host = profile.get("microphone.udpraw.host", "localhost")
+        host = profile.get("microphone.udpraw.host", "")
 
-        record_command = ["nc", "-ukl", str(host), "-p", str(port)]
+        record_command = ["nc", "-ukl"]
+        if host:
+            record_command.extend(["-s", str(host)])
+
+        record_command.extend(["-p", str(port)])
 
         mic_command = [
             "rhasspy-microphone-cli-hermes",
