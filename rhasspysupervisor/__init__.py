@@ -431,6 +431,39 @@ def get_microphone(
 
         return mic_command
 
+    if mic_system == "udpraw":
+        # Recevies raw audio from UDP socket
+        port = profile.get("microphone.udpraw.port")
+        assert port, "microphone.udpraw.port is required"
+
+        host = profile.get("microphone.udpraw.host", "localhost")
+
+        record_command = ["nc", "-ukl", str(host), "-p", str(port)]
+
+        mic_command = [
+            "rhasspy-microphone-cli-hermes",
+            "--sample-rate",
+            "16000",
+            "--sample-width",
+            "2",
+            "--channels",
+            "1",
+            "--record-command",
+            shlex.quote(" ".join(record_command)),
+        ]
+
+        add_standard_args(
+            profile,
+            mic_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
+        )
+
+        return mic_command
+
     raise ValueError(f"Unsupported audio input system (got {mic_system})")
 
 
