@@ -379,8 +379,8 @@ def get_microphone(
         # Command to record audio
         record_program = profile.get("microphone.command.record_program")
         assert record_program, "microphone.command.record_program is required"
-        record_command = [record_program] + profile.get(
-            "microphone.command.record_arguments", []
+        record_command = [record_program] + command_args(
+            profile.get("microphone.command.record_arguments", [])
         )
 
         mic_command = [
@@ -428,43 +428,6 @@ def get_microphone(
             )
         else:
             _LOGGER.warning("No microphone device testing command provided.")
-
-        return mic_command
-
-    if mic_system == "udpraw":
-        # Recevies raw audio from UDP socket
-        port = profile.get("microphone.udpraw.port")
-        assert port, "microphone.udpraw.port is required"
-
-        host = profile.get("microphone.udpraw.host", "")
-
-        record_command = ["nc", "-ukl"]
-        if host:
-            record_command.extend(["-s", str(host)])
-
-        record_command.extend(["-p", str(port)])
-
-        mic_command = [
-            "rhasspy-microphone-cli-hermes",
-            "--sample-rate",
-            "16000",
-            "--sample-width",
-            "2",
-            "--channels",
-            "1",
-            "--record-command",
-            shlex.quote(" ".join(record_command)),
-        ]
-
-        add_standard_args(
-            profile,
-            mic_command,
-            siteIds,
-            mqtt_host,
-            mqtt_port,
-            mqtt_username,
-            mqtt_password,
-        )
 
         return mic_command
 
@@ -648,7 +611,9 @@ def get_wake(
     if wake_system == "command":
         user_program = profile.get("wake.command.program")
         assert user_program, "wake.command.program is required"
-        user_command = [user_program] + profile.get("wake.command.arguments", [])
+        user_command = [user_program] + command_args(
+            profile.get("wake.command.arguments", [])
+        )
 
         wake_command = [
             "rhasspy-remote-http-hermes",
@@ -926,8 +891,8 @@ def get_speech_to_text(
     if stt_system == "command":
         user_program = profile.get("speech_to_text.command.program")
         assert user_program, "speech_to_text.command.program is required"
-        user_command = [user_program] + profile.get(
-            "speech_to_text.command.arguments", []
+        user_command = [user_program] + command_args(
+            profile.get("speech_to_text.command.arguments", [])
         )
 
         stt_command = [
@@ -982,8 +947,8 @@ def get_speech_to_text(
         if stt_train_system == "auto":
             train_program = profile.get("training.speech_to_text.command.program")
             if train_program:
-                train_command = [train_program] + profile.get(
-                    "training.speech_to_text.command.arguments", []
+                train_command = [train_program] + command_args(
+                    profile.get("training.speech_to_text.command.arguments", [])
                 )
                 stt_command.extend(
                     [
@@ -1114,7 +1079,9 @@ def get_intent_recognition(
     if intent_system == "command":
         user_program = profile.get("intent.command.program")
         assert user_program
-        user_command = [user_program] + profile.get("intent.command.arguments", [])
+        user_command = [user_program] + command_args(
+            profile.get("intent.command.arguments", [])
+        )
 
         intent_command = [
             "rhasspy-remote-http-hermes",
@@ -1143,8 +1110,8 @@ def get_intent_recognition(
         if intent_train_system == "auto":
             train_program = profile.get("training.intent.command.program")
             if train_program:
-                train_command = [train_program] + profile.get(
-                    "training.intent.command.arguments", []
+                train_command = [train_program] + command_args(
+                    profile.get("training.intent.command.arguments", [])
                 )
                 intent_command.extend(
                     [
@@ -1297,7 +1264,9 @@ def get_intent_handling(
     if handle_system == "command":
         user_program = profile.get("handle.command.program")
         assert user_program, "handle.command.program is required"
-        user_command = [user_program] + profile.get("handle.command.arguments", [])
+        user_command = [user_program] + command_args(
+            profile.get("handle.command.arguments", [])
+        )
 
         handle_command = [
             "rhasspy-remote-http-hermes",
@@ -1599,8 +1568,8 @@ def get_text_to_speech(
     if tts_system == "command":
         user_program = profile.get("text_to_speech.command.program")
         assert user_program, "text_to_speech.command.program is required"
-        user_command = [user_program] + profile.get(
-            "text_to_speech.command.arguments", []
+        user_command = [user_program] + command_args(
+            profile.get("text_to_speech.command.arguments", [])
         )
 
         tts_command = [
@@ -2293,6 +2262,19 @@ def add_ssl_args(command: typing.List[str], profile: Profile):
 
     if keyfile:
         command.extend(["--keyfile", shlex.quote(str(keyfile))])
+
+
+def command_args(
+    arguments: typing.Optional[typing.Union[str, typing.List[str]]]
+) -> typing.List[str]:
+    """Parse command arguments as string or list."""
+    if arguments:
+        if isinstance(arguments, str):
+            return shlex.split(arguments)
+
+        return arguments
+
+    return []
 
 
 # -----------------------------------------------------------------------------
