@@ -383,14 +383,18 @@ def get_microphone(
             profile.get("microphone.command.record_arguments", [])
         )
 
+        sample_rate = int(profile.get("microphone.command.sample_rate", 16000))
+        sample_width = int(profile.get("microphone.command.sample_width", 2))
+        channels = int(profile.get("microphone.command.channels", 1))
+
         mic_command = [
             "rhasspy-microphone-cli-hermes",
             "--sample-rate",
-            "16000",
+            str(sample_rate),
             "--sample-width",
-            "2",
+            str(sample_width),
             "--channels",
-            "1",
+            str(channels),
             "--record-command",
             shlex.quote(" ".join(record_command)),
         ]
