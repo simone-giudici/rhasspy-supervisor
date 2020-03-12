@@ -241,6 +241,7 @@ def print_mqtt(out_file: typing.TextIO, mqtt_port: int):
 
 
 def add_standard_args(
+    profile: Profile,
     command: typing.List[str],
     siteIds: typing.List[str],
     mqtt_host: str = "localhost",
@@ -262,6 +263,10 @@ def add_standard_args(
     if mqtt_username:
         command.extend(["--username", shlex.quote(str(mqtt_username))])
         command.extend(["--username", shlex.quote(str(mqtt_password))])
+
+    log_format = profile.get("logging.format", "")
+    if log_format:
+        command.extend(["--log-format", shlex.quote(str(log_format))])
 
 
 # -----------------------------------------------------------------------------
@@ -316,7 +321,13 @@ def get_microphone(
         ]
 
         add_standard_args(
-            mic_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            mic_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         udp_audio_port = profile.get("microphone.arecord.udp_audio_port", "")
@@ -341,7 +352,13 @@ def get_microphone(
         ]
 
         add_standard_args(
-            mic_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            mic_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         mic_device = profile.get("microphone.pyaudio.device", "").strip()
@@ -379,7 +396,13 @@ def get_microphone(
         ]
 
         add_standard_args(
-            mic_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            mic_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         # Command to list available audio input devices
@@ -462,7 +485,13 @@ def get_wake(
         ]
 
         add_standard_args(
-            wake_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            wake_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         udp_audio_port = profile.get("wake.porcupine.udp_audio_port", "")
@@ -479,7 +508,13 @@ def get_wake(
         ]
 
         add_standard_args(
-            wake_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            wake_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         udp_audio_port = profile.get("wake.snowboy.udp_audio_port", "")
@@ -552,7 +587,13 @@ def get_wake(
                 )
 
         add_standard_args(
-            wake_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            wake_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         udp_audio_port = profile.get("wake.pocketsphinx.udp_audio_port", "")
@@ -579,7 +620,13 @@ def get_wake(
         ]
 
         add_standard_args(
-            wake_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            wake_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         # Audio format
@@ -672,7 +719,13 @@ def get_speech_to_text(
         ]
 
         add_standard_args(
-            stt_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            stt_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         if open_transcription:
@@ -758,7 +811,13 @@ def get_speech_to_text(
         ]
 
         add_standard_args(
-            stt_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            stt_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         if open_transcription:
@@ -841,7 +900,13 @@ def get_speech_to_text(
         ]
 
         add_standard_args(
-            stt_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            stt_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         add_ssl_args(stt_command, profile)
@@ -864,7 +929,13 @@ def get_speech_to_text(
         stt_command = ["rhasspy-remote-http-hermes", "--asr-url", shlex.quote(url)]
 
         add_standard_args(
-            stt_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            stt_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         add_ssl_args(stt_command, profile)
@@ -937,7 +1008,13 @@ def get_intent_recognition(
         ]
 
         add_standard_args(
-            intent_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            intent_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         fuzzy = profile.get("intent.fsticuffs.fuzzy", True)
@@ -974,7 +1051,13 @@ def get_intent_recognition(
         ]
 
         add_standard_args(
-            intent_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            intent_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         replace_numbers = profile.get("intent.replace_numbers", True)
@@ -1003,7 +1086,13 @@ def get_intent_recognition(
         ]
 
         add_standard_args(
-            intent_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            intent_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         # Case transformation
@@ -1038,7 +1127,13 @@ def get_intent_recognition(
         intent_command = ["rhasspy-remote-http-hermes", "--nlu-url", shlex.quote(url)]
 
         add_standard_args(
-            intent_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            intent_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         # Case transformation
@@ -1106,7 +1201,13 @@ def get_intent_handling(
         handle_command = ["rhasspy-homeassistant-hermes", "--url", shlex.quote(url)]
 
         add_standard_args(
-            handle_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            handle_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         handle_type = profile.get("home_assistant.handle_type")
@@ -1143,7 +1244,13 @@ def get_intent_handling(
         ]
 
         add_standard_args(
-            handle_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            handle_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         add_ssl_args(handle_command, profile)
@@ -1162,7 +1269,13 @@ def get_intent_handling(
         ]
 
         add_standard_args(
-            handle_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            handle_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         add_ssl_args(handle_command, profile)
@@ -1214,6 +1327,7 @@ def get_dialogue(
         dialogue_command = ["rhasspy-dialogue-hermes"]
 
         add_standard_args(
+            profile,
             dialogue_command,
             siteIds,
             mqtt_host,
@@ -1287,7 +1401,13 @@ def get_text_to_speech(
         ]
 
         add_standard_args(
-            tts_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            tts_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         return tts_command
@@ -1313,7 +1433,13 @@ def get_text_to_speech(
         ]
 
         add_standard_args(
-            tts_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            tts_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         return tts_command
@@ -1348,7 +1474,13 @@ def get_text_to_speech(
         ]
 
         add_standard_args(
-            tts_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            tts_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         return tts_command
@@ -1416,7 +1548,13 @@ def get_text_to_speech(
         ]
 
         add_standard_args(
-            tts_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            tts_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         return tts_command
@@ -1435,7 +1573,13 @@ def get_text_to_speech(
         ]
 
         add_standard_args(
-            tts_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            tts_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         add_ssl_args(tts_command, profile)
@@ -1449,7 +1593,13 @@ def get_text_to_speech(
         tts_command = ["rhasspy-remote-http-hermes", "--tts-url", shlex.quote(url)]
 
         add_standard_args(
-            tts_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            tts_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         add_ssl_args(tts_command, profile)
@@ -1507,7 +1657,13 @@ def get_speakers(
         ]
 
         add_standard_args(
-            output_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            output_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         return output_command
@@ -1525,7 +1681,13 @@ def get_speakers(
         ]
 
         add_standard_args(
-            output_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+            profile,
+            output_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
         )
 
         # Command to list available audio output devices
@@ -1586,7 +1748,13 @@ def get_webhooks(
     webhook_command = ["rhasspy-remote-http-hermes"]
 
     add_standard_args(
-        webhook_command, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        profile,
+        webhook_command,
+        siteIds,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
 
     add_ssl_args(webhook_command, profile)
