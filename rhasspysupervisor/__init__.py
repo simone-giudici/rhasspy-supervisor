@@ -1714,6 +1714,39 @@ def get_speakers(
 
         return output_command
 
+    if sound_system == "remote":
+        # POST WAV data to URL
+        url = profile.get("sounds.remote.url")
+        assert url, "sounds.remote.url is required"
+
+        play_command = [
+            "curl",
+            "-s",
+            "-X",
+            "POST",
+            "-H",
+            "Content-Type: audio/wav",
+            "--data-binary",
+            "@-",
+            shlex.quote(str(url)),
+        ]
+
+        output_command = [
+            "rhasspy-speakers-cli-hermes",
+            "--play-command",
+            shlex.quote(" ".join(str(v) for v in play_command)),
+        ]
+
+        add_standard_args(
+            profile,
+            output_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
+        )
+
     raise ValueError(f"Unsupported sound output system (got {sound_system})")
 
 
