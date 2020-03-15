@@ -560,6 +560,42 @@ def get_wake(
 
         return wake_command
 
+    if wake_system == "precise":
+        model = profile.get("wake.precise.model") or "hey-mycroft-2.pb"
+        assert model, "wake.precise.model required"
+
+        sensitivity = str(profile.get("wake.precise.sensitivity", 0.5)) or "0.5"
+        trigger_level = str(profile.get("wake.precise.trigger_level", 3)) or "3"
+
+        wake_command = [
+            "rhasspy-wake-precise-hermes",
+            "--model",
+            shlex.quote(str(model)),
+            "--sensitivity",
+            str(sensitivity),
+            "--trigger-level",
+            str(trigger_level),
+            "--model-dir",
+            shlex.quote(str(write_path(profile, "precise"))),
+        ]
+
+        add_standard_args(
+            profile,
+            wake_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
+        )
+
+        udp_audio_port = profile.get("wake.precise.udp_audio_port", "")
+        if udp_audio_port:
+            wake_command.extend(["--udp-audio-port", str(udp_audio_port)])
+
+        return wake_command
+
+
     if wake_system == "pocketsphinx":
         # Load decoder settings (use speech-to-text configuration as a fallback)
         acoustic_model = profile.get("wake.pocketsphinx.acoustic_model") or profile.get(
