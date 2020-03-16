@@ -595,7 +595,6 @@ def get_wake(
 
         return wake_command
 
-
     if wake_system == "pocketsphinx":
         # Load decoder settings (use speech-to-text configuration as a fallback)
         acoustic_model = profile.get("wake.pocketsphinx.acoustic_model") or profile.get(
@@ -1109,6 +1108,60 @@ def get_intent_recognition(
             locale = profile.get("locale")
             if locale:
                 intent_command.extend(["--language", str(locale)])
+
+        # Case transformation
+        if dictionary_casing:
+            intent_command.extend(["--casing", dictionary_casing])
+
+        return intent_command
+
+    if intent_system == "rasa":
+        url = profile.get("intent.rasa.url", "")
+        assert url, "intent.rasa.url is required"
+
+        intent_command = [
+            "rhasspy-rasa-nlu-hermes",
+            "--rasa-url",
+            shlex.quote(str(url)),
+        ]
+
+        add_standard_args(
+            profile,
+            intent_command,
+            siteIds,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
+        )
+
+        language = profile.get("intent.rasa.language")
+        if language:
+            intent_command.extend(["--rasa-language", shlex.quote(str(language))])
+
+        config_yaml = profile.get("intent.rasa.config_yaml")
+        if config_yaml:
+            intent_command.extend(
+                ["--rasa-config", shlex.quote(str(write_path(profile, config_yaml)))]
+            )
+
+        project_name = profile.get("intent.rasa.project_name")
+        if project_name:
+            intent_command.extend(["--rasa-project", shlex.quote(str(project_name))])
+
+        examples = profile.get("intent.rasa.examples_markdown")
+        if examples:
+            intent_command.extend(
+                ["--examples-path", shlex.quote(str(write_path(profile, examples)))]
+            )
+
+        replace_numbers = profile.get("intent.replace_numbers", True)
+        if replace_numbers:
+            intent_command.append("--replace-numbers")
+
+            locale = profile.get("locale")
+            if locale:
+                intent_command.extend(["--number-language", str(locale)])
 
         # Case transformation
         if dictionary_casing:
