@@ -1435,6 +1435,11 @@ def get_dialogue(
             mqtt_password,
         )
 
+        # Seconds before a session times out
+        session_timeout = str(profile.get("dialogue.session_timeout", ""))
+        if session_timeout:
+            dialogue_command.extend(["--session-timeout", session_timeout])
+
         return dialogue_command
 
     raise ValueError(f"Unsupported dialogue system (got {dialogue_system})")
