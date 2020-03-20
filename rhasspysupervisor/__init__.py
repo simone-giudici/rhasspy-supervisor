@@ -984,19 +984,11 @@ def get_speech_to_text(
         # Training
         stt_train_system = profile.get("training.speech_to_text.system", "auto")
         if stt_train_system == "auto":
-            train_program = profile.get("training.speech_to_text.command.program")
-            if train_program:
-                train_command = [train_program] + command_args(
-                    profile.get("training.speech_to_text.command.arguments", [])
-                )
-                stt_command.extend(
-                    [
-                        "--asr-train-command",
-                        shlex.quote(" ".join(str(v) for v in train_command)),
-                    ]
-                )
+            train_url = profile.get("training.speech_to_text.remote.url")
+            if train_url:
+                stt_command.extend(["--asr-train-url", shlex.quote(str(train_url))])
             else:
-                _LOGGER.warning("No speech to text training command was provided")
+                _LOGGER.warning("No speech to text training URL was provided")
 
         return stt_command
 
@@ -1023,7 +1015,7 @@ def print_speech_to_text(
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for adapt, rasaNLU, flair
+# TODO: Add support for adapt, flair
 
 
 def get_intent_recognition(
