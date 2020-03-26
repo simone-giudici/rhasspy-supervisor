@@ -262,7 +262,7 @@ def add_standard_args(
 
     if mqtt_username:
         command.extend(["--username", shlex.quote(str(mqtt_username))])
-        command.extend(["--username", shlex.quote(str(mqtt_password))])
+        command.extend(["--password", shlex.quote(str(mqtt_password))])
 
     log_format = profile.get("logging.format", "")
     if log_format:
