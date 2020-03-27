@@ -1093,6 +1093,10 @@ def get_intent_recognition(
             mqtt_password,
         )
 
+        confidence_threshold = profile.get("intent.fuzzywuzzy.min_confidence")
+        if confidence_threshold is not None:
+            intent_command.extend(["--confidence-threshold", str(confidence_threshold)])
+
         replace_numbers = profile.get("intent.replace_numbers", True)
         if replace_numbers:
             intent_command.append("--replace-numbers")
