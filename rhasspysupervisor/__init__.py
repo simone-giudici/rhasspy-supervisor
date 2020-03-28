@@ -1482,22 +1482,24 @@ def get_text_to_speech(
 ):
     """Get command for text to speech system"""
     if tts_system == "espeak":
-        espeak_command = ["espeak", "--stdout"]
-        voice = profile.get("text_to_speech.espeak.voice", "").strip()
-        if not voice:
-            voice = profile.get("language", "").strip()
-
-        if voice:
-            espeak_command.extend(["-v", str(voice)])
+        espeak_command = ["espeak", "--stdout", "-v", "{lang}"]
 
         espeak_command.extend(profile.get("text_to_speech.espeak.arguments", []))
 
+        voice = profile.get("text_to_speech.espeak.voice").strip()
+        if not voice:
+            voice = profile.get("language").strip()
+
+        if voice:
+            voice = "en-us"
         tts_command = [
             "rhasspy-tts-cli-hermes",
             "--tts-command",
             shlex.quote(" ".join(str(v) for v in espeak_command)),
             "--voices-command",
             shlex.quote("espeak --voices | tail -n +2 | awk '{ print $2,$4 }'"),
+            "--language",
+            shlex.quote(str(voice)),
         ]
 
         add_standard_args(
@@ -1513,16 +1515,13 @@ def get_text_to_speech(
         return tts_command
 
     if tts_system == "flite":
-        flite_command = ["flite", "-o", "/dev/stdout"]
-        voice = profile.get("text_to_speech.flite.voice", "").strip()
-
-        if voice:
-            flite_command.extend(["-voice", str(voice)])
-
+        flite_command = ["flite", "-o", "/dev/stdout", "-voice", "{lang}"]
         flite_command.extend(profile.get("text_to_speech.flite.arguments", []))
 
         # Text will be final argument
         flite_command.append("-t")
+
+        voice = profile.get("text_to_speech.flite.voice", "slt").strip()
 
         tts_command = [
             "rhasspy-tts-cli-hermes",
@@ -1530,6 +1529,8 @@ def get_text_to_speech(
             shlex.quote(" ".join(str(v) for v in flite_command)),
             "--voices-command",
             shlex.quote("flite -lv | cut -d: -f 2- | tr ' ' '\\n'"),
+            "--language",
+            shlex.quote(voice),
         ]
 
         add_standard_args(
@@ -1545,13 +1546,7 @@ def get_text_to_speech(
         return tts_command
 
     if tts_system == "picotts":
-        picotts_command = ["pico2wave"]
-        locale = profile.get("locale", "").strip()
-
-        if locale:
-            locale = locale.replace("_", "-")
-            picotts_command.extend(["-l", str(locale)])
-
+        picotts_command = ["pico2wave", "-l", "{lang}"]
         picotts_command.extend(["-w", "$t", '"$0"'])
 
         # pico2wave REALLY wants to write to a real file, so we have to wrap it
@@ -1583,6 +1578,12 @@ def get_text_to_speech(
             mqtt_password,
         )
 
+        locale = profile.get("locale", "").strip()
+
+        if locale:
+            locale = locale.replace("_", "-")
+            tts_command.extend(["--language", shlex.quote(str(locale))])
+
         return tts_command
 
     if tts_system == "marytts":
@@ -1590,7 +1591,6 @@ def get_text_to_speech(
         assert url, "text_to_speech.marytts.url is required"
 
         # Oh the things curl can do
-        locale = profile.get("text_to_speech.marytts.locale", "en-US").strip()
         marytts_command = [
             "curl",
             "-sS",
@@ -1606,7 +1606,7 @@ def get_text_to_speech(
             "--data-urlencode",
             "AUDIO=WAVE",
             "--data-urlencode",
-            shlex.quote(f"LOCALE={locale}"),
+            "LOCALE={lang}",
             "--data-urlencode",
             'INPUT_TEXT="$0"',
             shlex.quote(url),
@@ -1639,12 +1639,16 @@ def get_text_to_speech(
             shlex.quote(server_base_url + "/voices"),
         ]
 
+        locale = profile.get("text_to_speech.marytts.locale", "en-US").strip()
+
         tts_command = [
             "rhasspy-tts-cli-hermes",
             "--tts-command",
             shlex.quote(" ".join(str(v) for v in bash_command)),
             "--voices-command",
             shlex.quote(" ".join(str(v) for v in voices_command)),
+            "--language",
+            shlex.quote(locale),
         ]
 
         add_standard_args(
