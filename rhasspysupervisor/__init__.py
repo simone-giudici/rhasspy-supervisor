@@ -1,5 +1,6 @@
 """Tools for generating supervisord/docker files for Rhasspy"""
 import logging
+import os
 import shlex
 import typing
 from pathlib import Path
@@ -1435,6 +1436,15 @@ def get_dialogue(
         session_timeout = str(profile.get("dialogue.session_timeout", ""))
         if session_timeout:
             dialogue_command.extend(["--session-timeout", session_timeout])
+
+        # Add sounds
+        for sound_name in ["wake", "recorded", "error"]:
+            sound_path = profile.get(f"sounds.{sound_name}")
+            if sound_path:
+                sound_path = os.path.expandvars(sound_path)
+                dialogue_command.extend(
+                    ["--sound", sound_name, shlex.quote(str(sound_path))]
+                )
 
         return dialogue_command
 
