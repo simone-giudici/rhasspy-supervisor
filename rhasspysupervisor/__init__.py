@@ -1496,7 +1496,7 @@ def get_text_to_speech(
 
         espeak_command.extend(profile.get("text_to_speech.espeak.arguments", []))
 
-        voice = profile.get("text_to_speech.espeak.voice").strip()
+        voice = str(profile.get("text_to_speech.espeak.voice", "")).strip()
         if not voice:
             voice = profile.get("language").strip()
 
@@ -1531,7 +1531,7 @@ def get_text_to_speech(
         # Text will be final argument
         flite_command.append("-t")
 
-        voice = profile.get("text_to_speech.flite.voice", "slt").strip()
+        voice = str(profile.get("text_to_speech.flite.voice", "slt")).strip()
 
         tts_command = [
             "rhasspy-tts-cli-hermes",
@@ -1588,7 +1588,7 @@ def get_text_to_speech(
             mqtt_password,
         )
 
-        locale = profile.get("locale", "").strip()
+        locale = str(profile.get("locale", "")).strip()
 
         if locale:
             locale = locale.replace("_", "-")
@@ -1649,7 +1649,7 @@ def get_text_to_speech(
             shlex.quote(server_base_url + "/voices"),
         ]
 
-        locale = profile.get("text_to_speech.marytts.locale", "en-US").strip()
+        locale = str(profile.get("text_to_speech.marytts.locale", "en-US")).strip()
 
         tts_command = [
             "rhasspy-tts-cli-hermes",
