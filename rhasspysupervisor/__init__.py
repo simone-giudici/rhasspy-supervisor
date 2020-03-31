@@ -1437,14 +1437,16 @@ def get_dialogue(
         if session_timeout:
             dialogue_command.extend(["--session-timeout", session_timeout])
 
-        # Add sounds
-        for sound_name in ["wake", "recorded", "error"]:
-            sound_path = profile.get(f"sounds.{sound_name}")
-            if sound_path:
-                sound_path = os.path.expandvars(sound_path)
-                dialogue_command.extend(
-                    ["--sound", sound_name, shlex.quote(str(sound_path))]
-                )
+        # Add sounds (skip if no audio output system)
+        sound_system = profile.get("sounds.system", "dummy")
+        if sound_system != "dummy":
+            for sound_name in ["wake", "recorded", "error"]:
+                sound_path = profile.get(f"sounds.{sound_name}")
+                if sound_path:
+                    sound_path = os.path.expandvars(sound_path)
+                    dialogue_command.extend(
+                        ["--sound", sound_name, shlex.quote(str(sound_path))]
+                    )
 
         return dialogue_command
 
