@@ -2540,10 +2540,10 @@ def add_ssl_args(command: typing.List[str], profile: Profile):
     keyfile = profile.get("home_assistant.key_file")
 
     if certfile:
-        command.extend(["--certfile", shlex.quote(str(certfile))])
+        command.extend(["--certfile", shlex.quote(os.path.expandvars(str(certfile)))])
 
     if keyfile:
-        command.extend(["--keyfile", shlex.quote(str(keyfile))])
+        command.extend(["--keyfile", shlex.quote(os.path.expandvars(str(keyfile)))])
 
 
 def command_args(
