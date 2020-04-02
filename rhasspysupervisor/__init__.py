@@ -1982,6 +1982,8 @@ def get_speakers(
             mqtt_password,
         )
 
+        return output_command
+
     raise ValueError(f"Unsupported sound output system (got {sound_system})")
 
 
