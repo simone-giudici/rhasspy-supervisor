@@ -1063,6 +1063,27 @@ def get_speech_to_text(
             else:
                 _LOGGER.warning("No speech to text training URL was provided")
 
+        # Silence detection
+        min_sec = str(profile.get("command.webrtcvad.min_sec", ""))
+        if min_sec:
+            stt_command.extend(["--voice-min-seconds", min_sec])
+
+        speech_sec = str(profile.get("command.webrtcvad.speech_sec", ""))
+        if speech_sec:
+            stt_command.extend(["--voice-speech-seconds", speech_sec])
+
+        silence_sec = str(profile.get("command.webrtcvad.silence_sec", ""))
+        if silence_sec:
+            stt_command.extend(["--voice-silence-seconds", silence_sec])
+
+        before_sec = str(profile.get("command.webrtcvad.before_sec", ""))
+        if before_sec:
+            stt_command.extend(["--voice-before-seconds", before_sec])
+
+        vad_mode = str(profile.get("command.webrtcvad.vad_mode", ""))
+        if vad_mode:
+            stt_command.extend(["--voice-sensitivity", vad_mode])
+
         return stt_command
 
     raise ValueError(f"Unsupported speech to text system (got {stt_system})")
