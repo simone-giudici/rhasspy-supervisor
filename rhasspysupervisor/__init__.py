@@ -18,14 +18,6 @@ _LOGGER = logging.getLogger("rhasspysupervisor")
 def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=12183):
     """Generate supervisord conf from Rhasspy profile"""
 
-    def write_boilerplate():
-        """Write boilerplate settings"""
-        print("stopasgroup=true", file=out_file)
-        print("stdout_logfile=/dev/stdout", file=out_file)
-        print("stdout_logfile_maxbytes=0", file=out_file)
-        print("redirect_stderr=true", file=out_file)
-        print("", file=out_file)
-
     # Header
     print("[supervisord]", file=out_file)
     print("nodaemon=true", file=out_file)
@@ -48,7 +40,6 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
         mqtt_username = ""
         mqtt_password = ""
         print_mqtt(out_file, mqtt_port=local_mqtt_port)
-        write_boilerplate()
 
     # -------------------------------------------------------------------------
 
@@ -68,7 +59,6 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             mqtt_username=mqtt_username,
             mqtt_password=mqtt_password,
         )
-        write_boilerplate()
     else:
         _LOGGER.debug("Microphone disabled (system=%s)", mic_system)
 
@@ -86,7 +76,6 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             mqtt_username=mqtt_username,
             mqtt_password=mqtt_password,
         )
-        write_boilerplate()
     else:
         _LOGGER.debug("Speakers disabled (system=%s)", sound_system)
 
@@ -104,7 +93,6 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             mqtt_username=mqtt_username,
             mqtt_password=mqtt_password,
         )
-        write_boilerplate()
     else:
         _LOGGER.debug("Wake word disabled (system=%s)", wake_system)
 
@@ -124,7 +112,6 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             mqtt_username=mqtt_username,
             mqtt_password=mqtt_password,
         )
-        write_boilerplate()
     else:
         _LOGGER.debug("Speech to text disabled (system=%s)", stt_system)
 
@@ -142,7 +129,6 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             mqtt_username=mqtt_username,
             mqtt_password=mqtt_password,
         )
-        write_boilerplate()
     else:
         _LOGGER.debug("Intent recognition disabled (system=%s)", intent_system)
 
@@ -160,7 +146,6 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             mqtt_username=mqtt_username,
             mqtt_password=mqtt_password,
         )
-        write_boilerplate()
     else:
         _LOGGER.debug("Intent handling disabled (system=%s)", handle_system)
 
@@ -180,7 +165,6 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             mqtt_username=mqtt_username,
             mqtt_password=mqtt_password,
         )
-        write_boilerplate()
     else:
         _LOGGER.debug("Text to speech disabled (system=%s)", tts_system)
 
@@ -200,7 +184,6 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             mqtt_username=mqtt_username,
             mqtt_password=mqtt_password,
         )
-        write_boilerplate()
     else:
         _LOGGER.debug("Dialogue disabled (system=%s)", dialogue_system)
 
@@ -221,7 +204,15 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             mqtt_username=mqtt_username,
             mqtt_password=mqtt_password,
         )
-        write_boilerplate()
+
+
+def write_boilerplate(out_file: typing.TextIO):
+    """Write boilerplate settings for supervisord service"""
+    print("stopasgroup=true", file=out_file)
+    print("stdout_logfile=/dev/stdout", file=out_file)
+    print("stdout_logfile_maxbytes=0", file=out_file)
+    print("redirect_stderr=true", file=out_file)
+    print("", file=out_file)
 
 
 # -----------------------------------------------------------------------------
@@ -231,11 +222,14 @@ def print_mqtt(out_file: typing.TextIO, mqtt_port: int):
     """Print command for internal MQTT broker"""
     mqtt_command = ["mosquitto", "-p", str(mqtt_port)]
 
-    print("[program:mqtt]", file=out_file)
-    print("command=", " ".join(mqtt_command), sep="", file=out_file)
+    if mqtt_command:
+        print("[program:mqtt]", file=out_file)
+        print("command=", " ".join(mqtt_command), sep="", file=out_file)
 
-    # Ensure broker starts first
-    print("priority=0", file=out_file)
+        # Ensure broker starts first
+        print("priority=0", file=out_file)
+
+        write_boilerplate(out_file)
 
 
 # -----------------------------------------------------------------------------
@@ -379,7 +373,10 @@ def get_microphone(
     if mic_system == "command":
         # Command to record audio
         record_program = profile.get("microphone.command.record_program")
-        assert record_program, "microphone.command.record_program is required"
+        if not record_program:
+            _LOGGER.error("microphone.command.record_program is required")
+            return []
+
         record_command = [record_program] + command_args(
             profile.get("microphone.command.record_arguments", [])
         )
@@ -454,8 +451,10 @@ def print_microphone(
         mic_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
 
-    print("[program:microphone]", file=out_file)
-    print("command=", " ".join(mic_command), sep="", file=out_file)
+    if mic_command:
+        print("[program:microphone]", file=out_file)
+        print("command=", " ".join(mic_command), sep="", file=out_file)
+        write_boilerplate(out_file)
 
 
 # -----------------------------------------------------------------------------
@@ -475,7 +474,9 @@ def get_wake(
     """Get command for wake system"""
     if wake_system == "porcupine":
         keyword = profile.get("wake.porcupine.keyword_path") or "porcupine.ppn"
-        assert keyword, "wake.porcupine.keyword_path required"
+        if not keyword:
+            _LOGGER.error("wake.porcupine.keyword_path required")
+            return []
 
         sensitivity = profile.get("wake.porcupine.sensitivity", "0.5")
 
@@ -563,7 +564,9 @@ def get_wake(
 
     if wake_system == "precise":
         model = profile.get("wake.precise.model") or "hey-mycroft-2.pb"
-        assert model, "wake.precise.model required"
+        if not model:
+            _LOGGER.error("wake.precise.model required")
+            return []
 
         sensitivity = str(profile.get("wake.precise.sensitivity", 0.5)) or "0.5"
         trigger_level = str(profile.get("wake.precise.trigger_level", 3)) or "3"
@@ -601,7 +604,9 @@ def get_wake(
         acoustic_model = profile.get("wake.pocketsphinx.acoustic_model") or profile.get(
             "speech_to_text.pocketsphinx.acoustic_model"
         )
-        assert acoustic_model, "acoustic model required"
+        if not acoustic_model:
+            _LOGGER.error("acoustic model required")
+            return []
 
         dictionaries = [
             profile.get("wake.pocketsphinx.dictionary"),
@@ -650,7 +655,10 @@ def get_wake(
 
     if wake_system == "command":
         user_program = profile.get("wake.command.program")
-        assert user_program, "wake.command.program is required"
+        if not user_program:
+            _LOGGER.error("wake.command.program is required")
+            return []
+
         user_command = [user_program] + command_args(
             profile.get("wake.command.arguments", [])
         )
@@ -712,8 +720,10 @@ def print_wake(
         mqtt_password,
     )
 
-    print("[program:wake_word]", file=out_file)
-    print("command=", " ".join(wake_command), sep="", file=out_file)
+    if wake_command:
+        print("[program:wake_word]", file=out_file)
+        print("command=", " ".join(wake_command), sep="", file=out_file)
+        write_boilerplate(out_file)
 
 
 # -----------------------------------------------------------------------------
@@ -732,7 +742,9 @@ def get_speech_to_text(
     if stt_system == "pocketsphinx":
         # Pocketsphinx
         acoustic_model = profile.get("speech_to_text.pocketsphinx.acoustic_model")
-        assert acoustic_model
+        if not acoustic_model:
+            _LOGGER.error("speech_to_text.pocketsphinx.acoustic_model is required")
+            return []
 
         open_transcription = bool(
             profile.get("speech_to_text.pocketsphinx.open_transcription", False)
@@ -747,8 +759,13 @@ def get_speech_to_text(
             dictionary = profile.get("speech_to_text.pocketsphinx.dictionary")
             language_model = profile.get("speech_to_text.pocketsphinx.language_model")
 
-        assert dictionary, "Dictionary required"
-        assert language_model, "Language model required"
+        if not dictionary:
+            _LOGGER.error("Pocketsphinx dictionary is required")
+            return []
+
+        if not language_model:
+            _LOGGER.error("Pocketsphinx language model required")
+            return []
 
         stt_command = [
             "rhasspy-asr-pocketsphinx-hermes",
@@ -845,7 +862,10 @@ def get_speech_to_text(
     if stt_system == "kaldi":
         # Kaldi
         model_dir = profile.get("speech_to_text.kaldi.model_dir")
-        assert model_dir
+        if not model_dir:
+            _LOGGER.error("speech_to_text.kaldi.model_dir is required")
+            return []
+
         model_dir = write_path(profile, model_dir)
 
         open_transcription = bool(
@@ -857,11 +877,16 @@ def get_speech_to_text(
         else:
             graph = profile.get("speech_to_text.kaldi.graph")
 
-        assert graph, "Graph directory is required"
+        if not graph:
+            _LOGGER.error("Kaldi graph directory is required")
+            return []
+
         graph = model_dir / graph
 
         model_type = profile.get("speech_to_text.kaldi.model_type")
-        assert model_type, "Model type is required"
+        if not model_type:
+            _LOGGER.error("Kaldi model type is required")
+            return []
 
         stt_command = [
             "rhasspy-asr-kaldi-hermes",
@@ -972,7 +997,10 @@ def get_speech_to_text(
 
     if stt_system == "command":
         user_program = profile.get("speech_to_text.command.program")
-        assert user_program, "speech_to_text.command.program is required"
+        if not user_program:
+            _LOGGER.error("speech_to_text.command.program is required")
+            return []
+
         user_command = [user_program] + command_args(
             profile.get("speech_to_text.command.arguments", [])
         )
@@ -1008,7 +1036,9 @@ def get_speech_to_text(
 
     if stt_system == "remote":
         url = profile.get("speech_to_text.remote.url")
-        assert url, "speech_to_text.remote.url is required"
+        if not url:
+            _LOGGER.error("speech_to_text.remote.url is required")
+            return []
 
         stt_command = ["rhasspy-remote-http-hermes", "--asr-url", shlex.quote(url)]
 
@@ -1052,8 +1082,11 @@ def print_speech_to_text(
     stt_command = get_speech_to_text(
         stt_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
-    print("[program:speech_to_text]", file=out_file)
-    print("command=", " ".join(stt_command), sep="", file=out_file)
+
+    if stt_command:
+        print("[program:speech_to_text]", file=out_file)
+        print("command=", " ".join(stt_command), sep="", file=out_file)
+        write_boilerplate(out_file)
 
 
 # -----------------------------------------------------------------------------
@@ -1075,7 +1108,9 @@ def get_intent_recognition(
 
     if intent_system == "fsticuffs":
         graph = profile.get("intent.fsticuffs.intent_graph")
-        assert graph, "Intent graph is required"
+        if not graph:
+            _LOGGER.error("intent.fsticuffs.intent_graph is required")
+            return []
 
         intent_command = [
             "rhasspy-nlu-hermes",
@@ -1113,10 +1148,14 @@ def get_intent_recognition(
 
     if intent_system == "fuzzywuzzy":
         graph = profile.get("intent.fsticuffs.intent_graph")
-        assert graph, "Intent graph is required"
+        if not graph:
+            _LOGGER.error("intent.fsticuffs.intent_graph is required")
+            return []
 
         examples = profile.get("intent.fuzzywuzzy.examples_json")
-        assert examples, "Examples JSON is required"
+        if not examples:
+            _LOGGER.error("intent.fuzzywuzzy.examples_json is required")
+            return []
 
         intent_command = [
             "rhasspy-fuzzywuzzy-hermes",
@@ -1156,7 +1195,9 @@ def get_intent_recognition(
 
     if intent_system == "rasa":
         url = profile.get("intent.rasa.url", "")
-        assert url, "intent.rasa.url is required"
+        if not url:
+            _LOGGER.error("intent.rasa.url is required")
+            return []
 
         intent_command = [
             "rhasspy-rasa-nlu-hermes",
@@ -1210,7 +1251,10 @@ def get_intent_recognition(
 
     if intent_system == "command":
         user_program = profile.get("intent.command.program")
-        assert user_program
+        if not user_program:
+            _LOGGER.error("intent.command.program is required")
+            return []
+
         user_command = [user_program] + command_args(
             profile.get("intent.command.arguments", [])
         )
@@ -1258,7 +1302,9 @@ def get_intent_recognition(
 
     if intent_system == "remote":
         url = profile.get("intent.remote.url")
-        assert url, "intent.remote.url is required"
+        if not url:
+            _LOGGER.error("intent.remote.url is required")
+            return []
 
         intent_command = ["rhasspy-remote-http-hermes", "--nlu-url", shlex.quote(url)]
 
@@ -1313,8 +1359,10 @@ def print_intent_recognition(
         mqtt_password,
     )
 
-    print("[program:intent_recognition]", file=out_file)
-    print("command=", " ".join(intent_command), sep="", file=out_file)
+    if intent_command:
+        print("[program:intent_recognition]", file=out_file)
+        print("command=", " ".join(intent_command), sep="", file=out_file)
+        write_boilerplate(out_file)
 
 
 # -----------------------------------------------------------------------------
@@ -1332,7 +1380,9 @@ def get_intent_handling(
     """Get command for intent handling system"""
     if handle_system == "hass":
         url = profile.get("home_assistant.url")
-        assert url, "home_assistant.url is required"
+        if not url:
+            _LOGGER.error("home_assistant.url is required")
+            return []
 
         handle_command = ["rhasspy-homeassistant-hermes", "--url", shlex.quote(url)]
 
@@ -1371,7 +1421,9 @@ def get_intent_handling(
 
     if handle_system == "remote":
         url = profile.get("handle.remote.url")
-        assert url, "handle.remote.url is required"
+        if not url:
+            _LOGGER.error("handle.remote.url is required")
+            return []
 
         handle_command = [
             "rhasspy-remote-http-hermes",
@@ -1395,7 +1447,10 @@ def get_intent_handling(
 
     if handle_system == "command":
         user_program = profile.get("handle.command.program")
-        assert user_program, "handle.command.program is required"
+        if not user_program:
+            _LOGGER.error("handle.command.program is required")
+            return []
+
         user_command = [user_program] + command_args(
             profile.get("handle.command.arguments", [])
         )
@@ -1444,8 +1499,10 @@ def print_intent_handling(
         mqtt_password,
     )
 
-    print("[program:intent_handling]", file=out_file)
-    print("command=", " ".join(handle_command), sep="", file=out_file)
+    if handle_command:
+        print("[program:intent_handling]", file=out_file)
+        print("command=", " ".join(handle_command), sep="", file=out_file)
+        write_boilerplate(out_file)
 
 
 # -----------------------------------------------------------------------------
@@ -1516,8 +1573,10 @@ def print_dialogue(
         mqtt_password,
     )
 
-    print("[program:dialogue]", file=out_file)
-    print("command=", " ".join(dialogue_command), sep="", file=out_file)
+    if dialogue_command:
+        print("[program:dialogue]", file=out_file)
+        print("command=", " ".join(dialogue_command), sep="", file=out_file)
+        write_boilerplate(out_file)
 
 
 # -----------------------------------------------------------------------------
@@ -1642,7 +1701,9 @@ def get_text_to_speech(
 
     if tts_system == "marytts":
         url = profile.get("text_to_speech.marytts.url", "").strip()
-        assert url, "text_to_speech.marytts.url is required"
+        if not url:
+            _LOGGER.error("text_to_speech.marytts.url is required")
+            return []
 
         # Oh the things curl can do
         marytts_command = [
@@ -1718,16 +1779,19 @@ def get_text_to_speech(
         return tts_command
 
     if tts_system == "command":
-        user_program = profile.get("text_to_speech.command.program")
-        assert user_program, "text_to_speech.command.program is required"
-        user_command = [user_program] + command_args(
-            profile.get("text_to_speech.command.arguments", [])
+        say_program = profile.get("text_to_speech.command.say_program")
+        if not say_program:
+            _LOGGER.error("text_to_speech.command.say_program is required")
+            return []
+
+        say_command = [say_program] + command_args(
+            profile.get("text_to_speech.command.say_arguments", [])
         )
 
         tts_command = [
-            "rhasspy-remote-http-hermes",
+            "rhasspy-tts-cli-hermes",
             "--tts-command",
-            shlex.quote(" ".join(str(v) for v in user_command)),
+            shlex.quote(" ".join(str(v) for v in say_command)),
         ]
 
         add_standard_args(
@@ -1740,13 +1804,29 @@ def get_text_to_speech(
             mqtt_password,
         )
 
-        add_ssl_args(tts_command, profile)
+        voices_program = profile.get("text_to_speech.command.voices_program")
+        if voices_program:
+            voices_command = [voices_program] + command_args(
+                profile.get("text_to_speech.command.voices_arguments", [])
+            )
+            tts_command.extend(
+                [
+                    "--voices-command",
+                    shlex.quote(" ".join(str(v) for v in voices_command)),
+                ]
+            )
+
+        language = profile.get("text_to_speech.command.language")
+        if language:
+            tts_command.extend(["--language", shlex.quote(str(language))])
 
         return tts_command
 
     if tts_system == "remote":
         url = profile.get("text_to_speech.remote.url")
-        assert url, "text_to_speech.remote.url is required"
+        if not url:
+            _LOGGER.error("text_to_speech.remote.url is required")
+            return []
 
         tts_command = ["rhasspy-remote-http-hermes", "--tts-url", shlex.quote(url)]
 
@@ -1782,8 +1862,10 @@ def print_text_to_speech(
         tts_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
 
-    print("[program:text_to_speech]", file=out_file)
-    print("command=", " ".join(tts_command), sep="", file=out_file)
+    if tts_command:
+        print("[program:text_to_speech]", file=out_file)
+        print("command=", " ".join(tts_command), sep="", file=out_file)
+        write_boilerplate(out_file)
 
 
 # -----------------------------------------------------------------------------
@@ -1829,7 +1911,10 @@ def get_speakers(
     if sound_system == "command":
         # Command to play WAV files
         play_program = profile.get("sounds.command.play_program")
-        assert play_program, "sounds.command.play_program is required"
+        if not play_program:
+            _LOGGER.error("sounds.command.play_program is required")
+            return []
+
         play_command = [play_program] + profile.get("sounds.command.play_arguments", [])
 
         output_command = [
@@ -1865,7 +1950,9 @@ def get_speakers(
     if sound_system == "remote":
         # POST WAV data to URL
         url = profile.get("sounds.remote.url")
-        assert url, "sounds.remote.url is required"
+        if not url:
+            _LOGGER.error("sounds.remote.url is required")
+            return []
 
         play_command = [
             "curl",
@@ -1919,8 +2006,10 @@ def print_speakers(
         mqtt_password,
     )
 
-    print("[program:speakers]", file=out_file)
-    print("command=", " ".join(output_command), sep="", file=out_file)
+    if output_command:
+        print("[program:speakers]", file=out_file)
+        print("command=", " ".join(output_command), sep="", file=out_file)
+        write_boilerplate(out_file)
 
 
 # -----------------------------------------------------------------------------
@@ -1990,8 +2079,10 @@ def print_webhooks(
         webhooks, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
 
-    print("[program:webhooks]", file=out_file)
-    print("command=", " ".join(webhook_command), sep="", file=out_file)
+    if webhook_command:
+        print("[program:webhooks]", file=out_file)
+        print("command=", " ".join(webhook_command), sep="", file=out_file)
+        write_boilerplate(out_file)
 
 
 # -----------------------------------------------------------------------------
@@ -2204,20 +2295,19 @@ def compose_microphone(
     mic_command = get_microphone(
         mic_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
-    service_name = mic_command.pop(0)
 
-    services["microphone"] = {
-        "image": f"rhasspy/{service_name}",
-        "command": " ".join(mic_command),
-        "devices": ["/dev/snd"],
-        "depends_on": ["mqtt"],
-        "tty": True,
-    }
+    if mic_command:
+        service_name = mic_command.pop(0)
+        services["microphone"] = {
+            "image": f"rhasspy/{service_name}",
+            "command": " ".join(mic_command),
+            "devices": ["/dev/snd"],
+            "depends_on": ["mqtt"],
+            "tty": True,
+        }
 
 
 # -----------------------------------------------------------------------------
-
-# TODO: Add support for precise
 
 
 def compose_wake(
@@ -2240,15 +2330,16 @@ def compose_wake(
         mqtt_username,
         mqtt_password,
     )
-    service_name = wake_command.pop(0)
 
-    services["wake"] = {
-        "image": f"rhasspy/{service_name}",
-        "command": " ".join(wake_command),
-        "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
-        "depends_on": ["mqtt"],
-        "tty": True,
-    }
+    if wake_command:
+        service_name = wake_command.pop(0)
+        services["wake"] = {
+            "image": f"rhasspy/{service_name}",
+            "command": " ".join(wake_command),
+            "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
+            "depends_on": ["mqtt"],
+            "tty": True,
+        }
 
 
 # -----------------------------------------------------------------------------
@@ -2268,15 +2359,16 @@ def compose_speech_to_text(
     stt_command = get_speech_to_text(
         stt_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
-    service_name = stt_command.pop(0)
 
-    services["speech_to_text"] = {
-        "image": f"rhasspy/{service_name}",
-        "command": " ".join(stt_command),
-        "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
-        "depends_on": ["mqtt"],
-        "tty": True,
-    }
+    if stt_command:
+        service_name = stt_command.pop(0)
+        services["speech_to_text"] = {
+            "image": f"rhasspy/{service_name}",
+            "command": " ".join(stt_command),
+            "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
+            "depends_on": ["mqtt"],
+            "tty": True,
+        }
 
 
 # -----------------------------------------------------------------------------
@@ -2302,15 +2394,16 @@ def compose_intent_recognition(
         mqtt_username,
         mqtt_password,
     )
-    service_name = intent_command.pop(0)
 
-    services["intent_recognition"] = {
-        "image": f"rhasspy/{service_name}",
-        "command": " ".join(intent_command),
-        "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
-        "depends_on": ["mqtt"],
-        "tty": True,
-    }
+    if intent_command:
+        service_name = intent_command.pop(0)
+        services["intent_recognition"] = {
+            "image": f"rhasspy/{service_name}",
+            "command": " ".join(intent_command),
+            "volumes": [f"{profile.user_profiles_dir}:{profile.user_profiles_dir}"],
+            "depends_on": ["mqtt"],
+            "tty": True,
+        }
 
 
 # -----------------------------------------------------------------------------
@@ -2336,14 +2429,15 @@ def compose_dialogue(
         mqtt_username,
         mqtt_password,
     )
-    service_name = dialogue_command.pop(0)
 
-    services["dialogue"] = {
-        "image": f"rhasspy/{service_name}",
-        "command": " ".join(dialogue_command),
-        "depends_on": ["mqtt"],
-        "tty": True,
-    }
+    if dialogue_command:
+        service_name = dialogue_command.pop(0)
+        services["dialogue"] = {
+            "image": f"rhasspy/{service_name}",
+            "command": " ".join(dialogue_command),
+            "depends_on": ["mqtt"],
+            "tty": True,
+        }
 
 
 # -----------------------------------------------------------------------------
@@ -2363,14 +2457,15 @@ def compose_text_to_speech(
     tts_command = get_text_to_speech(
         tts_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
-    service_name = tts_command.pop(0)
 
-    services["text_to_speech"] = {
-        "image": f"rhasspy/{service_name}",
-        "command": " ".join(tts_command),
-        "depends_on": ["mqtt"],
-        "tty": True,
-    }
+    if tts_command:
+        service_name = tts_command.pop(0)
+        services["text_to_speech"] = {
+            "image": f"rhasspy/{service_name}",
+            "command": " ".join(tts_command),
+            "depends_on": ["mqtt"],
+            "tty": True,
+        }
 
 
 # -----------------------------------------------------------------------------
@@ -2396,15 +2491,16 @@ def compose_speakers(
         mqtt_username,
         mqtt_password,
     )
-    service_name = output_command.pop(0)
 
-    services["speakers"] = {
-        "image": f"rhasspy/{service_name}",
-        "command": " ".join(output_command),
-        "devices": ["/dev/snd"],
-        "depends_on": ["mqtt"],
-        "tty": True,
-    }
+    if output_command:
+        service_name = output_command.pop(0)
+        services["speakers"] = {
+            "image": f"rhasspy/{service_name}",
+            "command": " ".join(output_command),
+            "devices": ["/dev/snd"],
+            "depends_on": ["mqtt"],
+            "tty": True,
+        }
 
 
 # -----------------------------------------------------------------------------
@@ -2424,14 +2520,15 @@ def compose_webhooks(
     webhook_command = get_webhooks(
         webhooks, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
-    service_name = webhook_command.pop(0)
 
-    services["webhooks"] = {
-        "image": f"rhasspy/{service_name}",
-        "command": " ".join(webhook_command),
-        "depends_on": ["mqtt"],
-        "tty": True,
-    }
+    if webhook_command:
+        service_name = webhook_command.pop(0)
+        services["webhooks"] = {
+            "image": f"rhasspy/{service_name}",
+            "command": " ".join(webhook_command),
+            "depends_on": ["mqtt"],
+            "tty": True,
+        }
 
 
 # -----------------------------------------------------------------------------
