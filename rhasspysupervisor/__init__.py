@@ -1557,9 +1557,10 @@ def get_dialogue(
         if session_timeout:
             dialogue_command.extend(["--session-timeout", session_timeout])
 
-        # Add sounds (skip if no audio output system)
+        # Add sounds (skip if no audio output system and no satellites)
+        satellite_siteIds = profile.get("dialogue.satellite_site_ids")
         sound_system = profile.get("sounds.system", "dummy")
-        if sound_system != "dummy":
+        if satellite_siteIds or (sound_system != "dummy"):
             for sound_name in ["wake", "recorded", "error"]:
                 sound_path = profile.get(f"sounds.{sound_name}")
                 if sound_path:
