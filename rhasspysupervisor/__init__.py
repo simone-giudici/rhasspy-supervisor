@@ -1905,7 +1905,7 @@ def get_speakers(
     if sound_system == "aplay":
         play_command = ["aplay", "-q", "-t", "wav"]
         list_command = ["aplay", "-L"]
-        sound_device = profile.get("sounds.arecord.device", "").strip()
+        sound_device = profile.get("sounds.aplay.device", "").strip()
         if sound_device:
             play_command.extend(["-D", str(sound_device)])
 
