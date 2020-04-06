@@ -431,6 +431,15 @@ def get_microphone(
         else:
             _LOGGER.warning("No microphone device testing command provided.")
 
+        # UDP/output siteId
+        udp_audio_port = profile.get("microphone.command.udp_audio_port", "")
+        if udp_audio_port:
+            mic_command.extend(["--udp-audio-port", str(udp_audio_port)])
+
+        output_siteId = profile.get("microphone.command.siteId", "")
+        if output_siteId:
+            mic_command.extend(["--output-siteId", shlex.quote(str(output_siteId))])
+
         return mic_command
 
     raise ValueError(f"Unsupported audio input system (got {mic_system})")
@@ -837,6 +846,10 @@ def get_speech_to_text(
             )
 
         # Silence detection
+        skip_sec = str(profile.get("command.webrtcvad.skip_sec", ""))
+        if skip_sec:
+            stt_command.extend(["--voice-skip-seconds", skip_sec])
+
         min_sec = str(profile.get("command.webrtcvad.min_sec", ""))
         if min_sec:
             stt_command.extend(["--voice-min-seconds", min_sec])
@@ -973,6 +986,10 @@ def get_speech_to_text(
             )
 
         # Silence detection
+        skip_sec = str(profile.get("command.webrtcvad.skip_sec", ""))
+        if skip_sec:
+            stt_command.extend(["--voice-skip-seconds", skip_sec])
+
         min_sec = str(profile.get("command.webrtcvad.min_sec", ""))
         if min_sec:
             stt_command.extend(["--voice-min-seconds", min_sec])
@@ -1064,6 +1081,10 @@ def get_speech_to_text(
                 _LOGGER.warning("No speech to text training URL was provided")
 
         # Silence detection
+        skip_sec = str(profile.get("command.webrtcvad.skip_sec", ""))
+        if skip_sec:
+            stt_command.extend(["--voice-skip-seconds", skip_sec])
+
         min_sec = str(profile.get("command.webrtcvad.min_sec", ""))
         if min_sec:
             stt_command.extend(["--voice-min-seconds", min_sec])
