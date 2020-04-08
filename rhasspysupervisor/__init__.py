@@ -24,7 +24,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     print("", file=out_file)
 
     # MQTT
-    master_siteIds = str(profile.get("mqtt.site_id", "default")).split(",")
+    master_site_ids = str(profile.get("mqtt.site_id", "default")).split(",")
 
     mqtt_host = str(profile.get("mqtt.host", "localhost"))
     mqtt_port = int(profile.get("mqtt.port", 1883))
@@ -46,14 +46,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Microphone
     mic_system = profile.get("microphone.system", "dummy")
     if mic_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(profile.get("microphone.satellite_site_ids", "")).split(
-            ","
-        )
+        satellite_site_ids = str(
+            profile.get("microphone.satellite_site_ids", "")
+        ).split(",")
         print_microphone(
             mic_system,
             profile,
             out_file,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -65,12 +65,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Speakers
     sound_system = profile.get("sounds.system", "dummy")
     if sound_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(profile.get("sounds.satellite_site_ids", "")).split(",")
+        satellite_site_ids = str(profile.get("sounds.satellite_site_ids", "")).split(
+            ","
+        )
         print_speakers(
             sound_system,
             profile,
             out_file,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -82,12 +84,12 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Wake Word
     wake_system = profile.get("wake.system", "dummy")
     if wake_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(profile.get("wake.satellite_site_ids", "")).split(",")
+        satellite_site_ids = str(profile.get("wake.satellite_site_ids", "")).split(",")
         print_wake(
             wake_system,
             profile,
             out_file,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -99,14 +101,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Speech to Text
     stt_system = profile.get("speech_to_text.system", "dummy")
     if stt_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(
+        satellite_site_ids = str(
             profile.get("speech_to_text.satellite_site_ids", "")
         ).split(",")
         print_speech_to_text(
             stt_system,
             profile,
             out_file,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -118,12 +120,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Intent Recognition
     intent_system = profile.get("intent.system", "dummy")
     if intent_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(profile.get("intent.satellite_site_ids", "")).split(",")
+        satellite_site_ids = str(profile.get("intent.satellite_site_ids", "")).split(
+            ","
+        )
         print_intent_recognition(
             intent_system,
             profile,
             out_file,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -135,12 +139,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Intent Handling
     handle_system = profile.get("handle.system", "dummy")
     if handle_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(profile.get("handle.satellite_site_ids", "")).split(",")
+        satellite_site_ids = str(profile.get("handle.satellite_site_ids", "")).split(
+            ","
+        )
         print_intent_handling(
             handle_system,
             profile,
             out_file,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -152,14 +158,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Text to Speech
     tts_system = profile.get("text_to_speech.system", "dummy")
     if tts_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(
+        satellite_site_ids = str(
             profile.get("text_to_speech.satellite_site_ids", "")
         ).split(",")
         print_text_to_speech(
             tts_system,
             profile,
             out_file,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -171,14 +177,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     # Dialogue Management
     dialogue_system = profile.get("dialogue.system", "dummy")
     if dialogue_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(profile.get("dialogue.satellite_site_ids", "")).split(
+        satellite_site_ids = str(profile.get("dialogue.satellite_site_ids", "")).split(
             ","
         )
         print_dialogue(
             dialogue_system,
             profile,
             out_file,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -191,14 +197,14 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     webhooks = profile.get("webhooks", {})
     webhook_events = [k for k in webhooks.keys() if k != "satellite_site_ids"]
     if webhook_events:
-        satellite_siteIds = str(profile.get("webhooks.satellite_site_ids", "")).split(
+        satellite_site_ids = str(profile.get("webhooks.satellite_site_ids", "")).split(
             ","
         )
         print_webhooks(
             webhooks,
             profile,
             out_file,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -238,7 +244,7 @@ def print_mqtt(out_file: typing.TextIO, mqtt_port: int):
 def add_standard_args(
     profile: Profile,
     command: typing.List[str],
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -250,10 +256,10 @@ def add_standard_args(
     command.extend(["--host", str(mqtt_host)])
     command.extend(["--port", str(mqtt_port)])
 
-    for siteId in siteIds:
-        siteId = siteId.strip()
-        if siteId:
-            command.extend(["--siteId", shlex.quote(str(siteId))])
+    for site_id in site_ids:
+        site_id = site_id.strip()
+        if site_id:
+            command.extend(["--site-id", shlex.quote(str(site_id))])
 
     if mqtt_username:
         command.extend(["--username", shlex.quote(str(mqtt_username))])
@@ -272,7 +278,7 @@ def add_standard_args(
 def get_microphone(
     mic_system: str,
     profile: Profile,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -318,7 +324,7 @@ def get_microphone(
         add_standard_args(
             profile,
             mic_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -329,9 +335,9 @@ def get_microphone(
         if udp_audio_port:
             mic_command.extend(["--udp-audio-port", str(udp_audio_port)])
 
-        output_siteId = profile.get("microphone.arecord.siteId", "")
-        if output_siteId:
-            mic_command.extend(["--output-siteId", shlex.quote(str(output_siteId))])
+        output_site_id = profile.get("microphone.arecord.site_id", "")
+        if output_site_id:
+            mic_command.extend(["--output-site-id", shlex.quote(str(output_site_id))])
 
         return mic_command
 
@@ -349,7 +355,7 @@ def get_microphone(
         add_standard_args(
             profile,
             mic_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -360,9 +366,9 @@ def get_microphone(
         if mic_device:
             mic_command.extend(["--device-index", str(mic_device)])
 
-        output_siteId = profile.get("microphone.pyaudio.siteId", "")
-        if output_siteId:
-            mic_command.extend(["--output-siteId", shlex.quote(str(output_siteId))])
+        output_site_id = profile.get("microphone.pyaudio.site_id", "")
+        if output_site_id:
+            mic_command.extend(["--output-site-id", shlex.quote(str(output_site_id))])
 
         udp_audio_port = profile.get("microphone.pyaudio.udp_audio_port", "")
         if udp_audio_port:
@@ -400,7 +406,7 @@ def get_microphone(
         add_standard_args(
             profile,
             mic_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -431,14 +437,14 @@ def get_microphone(
         else:
             _LOGGER.warning("No microphone device testing command provided.")
 
-        # UDP/output siteId
+        # UDP/output site_id
         udp_audio_port = profile.get("microphone.command.udp_audio_port", "")
         if udp_audio_port:
             mic_command.extend(["--udp-audio-port", str(udp_audio_port)])
 
-        output_siteId = profile.get("microphone.command.siteId", "")
-        if output_siteId:
-            mic_command.extend(["--output-siteId", shlex.quote(str(output_siteId))])
+        output_site_id = profile.get("microphone.command.site_id", "")
+        if output_site_id:
+            mic_command.extend(["--output-site-id", shlex.quote(str(output_site_id))])
 
         return mic_command
 
@@ -449,7 +455,7 @@ def print_microphone(
     mic_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -457,7 +463,13 @@ def print_microphone(
 ):
     """Print command for microphone system"""
     mic_command = get_microphone(
-        mic_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        mic_system,
+        profile,
+        site_ids,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
 
     if mic_command:
@@ -474,7 +486,7 @@ def print_microphone(
 def get_wake(
     wake_system: str,
     profile: Profile,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -502,7 +514,7 @@ def get_wake(
         add_standard_args(
             profile,
             wake_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -525,7 +537,7 @@ def get_wake(
         add_standard_args(
             profile,
             wake_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -595,7 +607,7 @@ def get_wake(
         add_standard_args(
             profile,
             wake_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -643,7 +655,7 @@ def get_wake(
         add_standard_args(
             profile,
             wake_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -681,7 +693,7 @@ def get_wake(
         add_standard_args(
             profile,
             wake_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -712,7 +724,7 @@ def print_wake(
     wake_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -722,7 +734,7 @@ def print_wake(
     wake_command = get_wake(
         wake_system,
         profile,
-        siteIds,
+        site_ids,
         mqtt_host,
         mqtt_port,
         mqtt_username,
@@ -741,7 +753,7 @@ def print_wake(
 def get_speech_to_text(
     stt_system: str,
     profile: Profile,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -789,7 +801,7 @@ def get_speech_to_text(
         add_standard_args(
             profile,
             stt_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -914,7 +926,7 @@ def get_speech_to_text(
         add_standard_args(
             profile,
             stt_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1031,7 +1043,7 @@ def get_speech_to_text(
         add_standard_args(
             profile,
             stt_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1062,7 +1074,7 @@ def get_speech_to_text(
         add_standard_args(
             profile,
             stt_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1114,7 +1126,7 @@ def print_speech_to_text(
     stt_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -1122,7 +1134,13 @@ def print_speech_to_text(
 ):
     """Print command for speech to text system"""
     stt_command = get_speech_to_text(
-        stt_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        stt_system,
+        profile,
+        site_ids,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
 
     if stt_command:
@@ -1139,7 +1157,7 @@ def print_speech_to_text(
 def get_intent_recognition(
     intent_system: str,
     profile: Profile,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -1163,7 +1181,7 @@ def get_intent_recognition(
         add_standard_args(
             profile,
             intent_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1210,7 +1228,7 @@ def get_intent_recognition(
         add_standard_args(
             profile,
             intent_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1250,7 +1268,7 @@ def get_intent_recognition(
         add_standard_args(
             profile,
             intent_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1310,7 +1328,7 @@ def get_intent_recognition(
         add_standard_args(
             profile,
             intent_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1353,7 +1371,7 @@ def get_intent_recognition(
         add_standard_args(
             profile,
             intent_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1384,7 +1402,7 @@ def print_intent_recognition(
     intent_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -1394,7 +1412,7 @@ def print_intent_recognition(
     intent_command = get_intent_recognition(
         intent_system,
         profile,
-        siteIds,
+        site_ids,
         mqtt_host,
         mqtt_port,
         mqtt_username,
@@ -1413,7 +1431,7 @@ def print_intent_recognition(
 def get_intent_handling(
     handle_system: str,
     profile: Profile,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -1431,7 +1449,7 @@ def get_intent_handling(
         add_standard_args(
             profile,
             handle_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1476,7 +1494,7 @@ def get_intent_handling(
         add_standard_args(
             profile,
             handle_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1506,7 +1524,7 @@ def get_intent_handling(
         add_standard_args(
             profile,
             handle_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1524,7 +1542,7 @@ def print_intent_handling(
     handle_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -1534,7 +1552,7 @@ def print_intent_handling(
     handle_command = get_intent_handling(
         handle_system,
         profile,
-        siteIds,
+        site_ids,
         mqtt_host,
         mqtt_port,
         mqtt_username,
@@ -1553,7 +1571,7 @@ def print_intent_handling(
 def get_dialogue(
     dialogue_system: str,
     profile: Profile,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -1566,7 +1584,7 @@ def get_dialogue(
         add_standard_args(
             profile,
             dialogue_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1579,9 +1597,9 @@ def get_dialogue(
             dialogue_command.extend(["--session-timeout", session_timeout])
 
         # Add sounds (skip if no audio output system and no satellites)
-        satellite_siteIds = profile.get("dialogue.satellite_site_ids")
+        satellite_site_ids = profile.get("dialogue.satellite_site_ids")
         sound_system = profile.get("sounds.system", "dummy")
-        if satellite_siteIds or (sound_system != "dummy"):
+        if satellite_site_ids or (sound_system != "dummy"):
             for sound_name in ["wake", "recorded", "error"]:
                 sound_path = profile.get(f"sounds.{sound_name}")
                 if sound_path:
@@ -1599,7 +1617,7 @@ def print_dialogue(
     dialogue_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -1609,7 +1627,7 @@ def print_dialogue(
     dialogue_command = get_dialogue(
         dialogue_system,
         profile,
-        siteIds,
+        site_ids,
         mqtt_host,
         mqtt_port,
         mqtt_username,
@@ -1630,7 +1648,7 @@ def print_dialogue(
 def get_text_to_speech(
     tts_system: str,
     profile: Profile,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -1661,7 +1679,7 @@ def get_text_to_speech(
         add_standard_args(
             profile,
             tts_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1692,7 +1710,7 @@ def get_text_to_speech(
         add_standard_args(
             profile,
             tts_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1727,7 +1745,7 @@ def get_text_to_speech(
         add_standard_args(
             profile,
             tts_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1812,7 +1830,7 @@ def get_text_to_speech(
         add_standard_args(
             profile,
             tts_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1840,7 +1858,7 @@ def get_text_to_speech(
         add_standard_args(
             profile,
             tts_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1876,7 +1894,7 @@ def get_text_to_speech(
         add_standard_args(
             profile,
             tts_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1894,7 +1912,7 @@ def print_text_to_speech(
     tts_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -1902,7 +1920,13 @@ def print_text_to_speech(
 ):
     """Print command for text to speech system"""
     tts_command = get_text_to_speech(
-        tts_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        tts_system,
+        profile,
+        site_ids,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
 
     if tts_command:
@@ -1917,7 +1941,7 @@ def print_text_to_speech(
 def get_speakers(
     sound_system: str,
     profile: Profile,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -1942,7 +1966,7 @@ def get_speakers(
         add_standard_args(
             profile,
             output_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -1969,7 +1993,7 @@ def get_speakers(
         add_standard_args(
             profile,
             output_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -2018,7 +2042,7 @@ def get_speakers(
         add_standard_args(
             profile,
             output_command,
-            siteIds,
+            site_ids,
             mqtt_host,
             mqtt_port,
             mqtt_username,
@@ -2034,7 +2058,7 @@ def print_speakers(
     sound_system: str,
     profile: Profile,
     out_file: typing.TextIO,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -2044,7 +2068,7 @@ def print_speakers(
     output_command = get_speakers(
         sound_system,
         profile,
-        siteIds,
+        site_ids,
         mqtt_host,
         mqtt_port,
         mqtt_username,
@@ -2063,7 +2087,7 @@ def print_speakers(
 def get_webhooks(
     webhooks: typing.Dict[str, typing.Any],
     profile: Profile,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -2075,7 +2099,7 @@ def get_webhooks(
     add_standard_args(
         profile,
         webhook_command,
-        siteIds,
+        site_ids,
         mqtt_host,
         mqtt_port,
         mqtt_username,
@@ -2088,7 +2112,7 @@ def get_webhooks(
     topics_urls: typing.List[typing.Tuple[str, str]] = []
     for key, values in webhooks.items():
         if key == "awake":
-            # Intepret has hotword detected event for all wakewordIds
+            # Intepret has hotword detected event for all wakeword ids
             if isinstance(values, str):
                 # Allow string or list of strings
                 values = [values]
@@ -2113,7 +2137,7 @@ def print_webhooks(
     webhooks: typing.Dict[str, typing.Any],
     profile: Profile,
     out_file: typing.TextIO,
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -2121,7 +2145,7 @@ def print_webhooks(
 ):
     """Print command for webhooks"""
     webhook_command = get_webhooks(
-        webhooks, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        webhooks, profile, site_ids, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
 
     if webhook_command:
@@ -2140,7 +2164,7 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     services: typing.Dict[str, typing.Any] = {}
 
     # MQTT
-    master_siteIds = str(profile.get("mqtt.site_id", "default")).split(",")
+    master_site_ids = str(profile.get("mqtt.site_id", "default")).split(",")
 
     mqtt_host = str(profile.get("mqtt.host", "localhost"))
     mqtt_port = int(profile.get("mqtt.port", 1883))
@@ -2162,14 +2186,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Microphone
     mic_system = profile.get("microphone.system", "dummy")
     if mic_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(profile.get("microphone.satellite_site_ids", "")).split(
-            ","
-        )
+        satellite_site_ids = str(
+            profile.get("microphone.satellite_site_ids", "")
+        ).split(",")
         compose_microphone(
             mic_system,
             profile,
             services,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -2181,12 +2205,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Speakers
     sound_system = profile.get("sounds.system", "dummy")
     if sound_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(profile.get("sounds.satellite_site_ids", "")).split(",")
+        satellite_site_ids = str(profile.get("sounds.satellite_site_ids", "")).split(
+            ","
+        )
         compose_speakers(
             sound_system,
             profile,
             services,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -2198,12 +2224,12 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Wake Word
     wake_system = profile.get("wake.system", "dummy")
     if wake_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(profile.get("wake.satellite_site_ids", "")).split(",")
+        satellite_site_ids = str(profile.get("wake.satellite_site_ids", "")).split(",")
         compose_wake(
             wake_system,
             profile,
             services,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -2215,14 +2241,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Speech to Text
     stt_system = profile.get("speech_to_text.system", "dummy")
     if stt_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(
+        satellite_site_ids = str(
             profile.get("speech_to_text.satellite_site_ids", "")
         ).split(",")
         compose_speech_to_text(
             stt_system,
             profile,
             services,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -2234,12 +2260,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Intent Recognition
     intent_system = profile.get("intent.system", "dummy")
     if intent_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(profile.get("intent.satellite_site_ids", "")).split(",")
+        satellite_site_ids = str(profile.get("intent.satellite_site_ids", "")).split(
+            ","
+        )
         compose_intent_recognition(
             intent_system,
             profile,
             services,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -2251,14 +2279,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Text to Speech
     tts_system = profile.get("text_to_speech.system", "dummy")
     if tts_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(
+        satellite_site_ids = str(
             profile.get("text_to_speech.satellite_site_ids", "")
         ).split(",")
         compose_text_to_speech(
             tts_system,
             profile,
             services,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -2270,14 +2298,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Dialogue Management
     dialogue_system = profile.get("dialogue.system", "dummy")
     if dialogue_system not in {"dummy", "hermes"}:
-        satellite_siteIds = str(profile.get("dialogue.satellite_site_ids", "")).split(
+        satellite_site_ids = str(profile.get("dialogue.satellite_site_ids", "")).split(
             ","
         )
         compose_dialogue(
             dialogue_system,
             profile,
             services,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -2289,14 +2317,14 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     # Webhooks
     webhooks = profile.get("webhooks", {})
     if webhooks:
-        satellite_siteIds = str(profile.get("webhooks.satellite_site_ids", "")).split(
+        satellite_site_ids = str(profile.get("webhooks.satellite_site_ids", "")).split(
             ","
         )
         compose_webhooks(
             webhooks,
             profile,
             services,
-            siteIds=(master_siteIds + satellite_siteIds),
+            site_ids=(master_site_ids + satellite_site_ids),
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -2330,7 +2358,7 @@ def compose_microphone(
     mic_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -2338,7 +2366,13 @@ def compose_microphone(
 ):
     """Print command for microphone system"""
     mic_command = get_microphone(
-        mic_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        mic_system,
+        profile,
+        site_ids,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
 
     if mic_command:
@@ -2359,7 +2393,7 @@ def compose_wake(
     wake_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -2369,7 +2403,7 @@ def compose_wake(
     wake_command = get_wake(
         wake_system,
         profile,
-        siteIds,
+        site_ids,
         mqtt_host,
         mqtt_port,
         mqtt_username,
@@ -2394,7 +2428,7 @@ def compose_speech_to_text(
     stt_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -2402,7 +2436,13 @@ def compose_speech_to_text(
 ):
     """Print command for speech to text system"""
     stt_command = get_speech_to_text(
-        stt_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        stt_system,
+        profile,
+        site_ids,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
 
     if stt_command:
@@ -2423,7 +2463,7 @@ def compose_intent_recognition(
     intent_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -2433,7 +2473,7 @@ def compose_intent_recognition(
     intent_command = get_intent_recognition(
         intent_system,
         profile,
-        siteIds,
+        site_ids,
         mqtt_host,
         mqtt_port,
         mqtt_username,
@@ -2458,7 +2498,7 @@ def compose_dialogue(
     dialogue_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -2468,7 +2508,7 @@ def compose_dialogue(
     dialogue_command = get_dialogue(
         dialogue_system,
         profile,
-        siteIds,
+        site_ids,
         mqtt_host,
         mqtt_port,
         mqtt_username,
@@ -2492,7 +2532,7 @@ def compose_text_to_speech(
     tts_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -2500,7 +2540,13 @@ def compose_text_to_speech(
 ):
     """Print command for text to speech system"""
     tts_command = get_text_to_speech(
-        tts_system, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        tts_system,
+        profile,
+        site_ids,
+        mqtt_host,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
     )
 
     if tts_command:
@@ -2520,7 +2566,7 @@ def compose_speakers(
     sound_system: str,
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -2530,7 +2576,7 @@ def compose_speakers(
     output_command = get_speakers(
         sound_system,
         profile,
-        siteIds,
+        site_ids,
         mqtt_host,
         mqtt_port,
         mqtt_username,
@@ -2555,7 +2601,7 @@ def compose_webhooks(
     webhooks: typing.Dict[str, typing.Any],
     profile: Profile,
     services: typing.Dict[str, typing.Any],
-    siteIds: typing.List[str],
+    site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -2563,7 +2609,7 @@ def compose_webhooks(
 ):
     """Print command for webhooks"""
     webhook_command = get_webhooks(
-        webhooks, profile, siteIds, mqtt_host, mqtt_port, mqtt_username, mqtt_password
+        webhooks, profile, site_ids, mqtt_host, mqtt_port, mqtt_username, mqtt_password
     )
 
     if webhook_command:
