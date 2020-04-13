@@ -808,6 +808,13 @@ def get_speech_to_text(
             mqtt_password,
         )
 
+        graph = profile.get("intent.fsticuffs.intent_graph")
+        if graph:
+            # Path to intent graph
+            stt_command.extend(
+                ["--intent-graph", shlex.quote(str(write_path(profile, graph)))]
+            )
+
         if open_transcription:
             # Don't overwrite dictionary or language model during training
             stt_command.append("--no-overwrite-train")
