@@ -1185,7 +1185,7 @@ def get_speech_to_text(
             language_model = profile.get(
                 "speech_to_text.deepspeech.base_language_model"
             )
-            trie = profile.get("speech_to_text.deepspeech.base_true")
+            trie = profile.get("speech_to_text.deepspeech.base_trie")
         else:
             language_model = profile.get("speech_to_text.deepspeech.language_model")
             trie = profile.get("speech_to_text.deepspeech.trie")
