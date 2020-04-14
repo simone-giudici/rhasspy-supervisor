@@ -331,6 +331,10 @@ def get_microphone(
             mqtt_password,
         )
 
+        udp_audio_host = profile.get("microphone.arecord.udp_audio_host", "127.0.0.1")
+        if udp_audio_host:
+            mic_command.extend(["--udp-audio-host", str(udp_audio_host)])
+
         udp_audio_port = profile.get("microphone.arecord.udp_audio_port", "")
         if udp_audio_port:
             mic_command.extend(["--udp-audio-port", str(udp_audio_port)])
@@ -369,6 +373,10 @@ def get_microphone(
         output_site_id = profile.get("microphone.pyaudio.site_id", "")
         if output_site_id:
             mic_command.extend(["--output-site-id", shlex.quote(str(output_site_id))])
+
+        udp_audio_host = profile.get("microphone.pyaudio.udp_audio_host", "127.0.0.1")
+        if udp_audio_host:
+            mic_command.extend(["--udp-audio-host", str(udp_audio_host)])
 
         udp_audio_port = profile.get("microphone.pyaudio.udp_audio_port", "")
         if udp_audio_port:
@@ -480,8 +488,6 @@ def print_microphone(
 
 # -----------------------------------------------------------------------------
 
-# TODO: Add support for precise
-
 
 def get_wake(
     wake_system: str,
@@ -493,6 +499,8 @@ def get_wake(
     mqtt_password: str = "",
 ) -> typing.List[str]:
     """Get command for wake system"""
+    wake_site_id = "default" if not site_ids else site_ids[0]
+
     if wake_system == "porcupine":
         keyword = profile.get("wake.porcupine.keyword_path") or "porcupine.ppn"
         if not keyword:
@@ -521,9 +529,9 @@ def get_wake(
             mqtt_password,
         )
 
-        udp_audio_port = profile.get("wake.porcupine.udp_audio_port", "")
-        if udp_audio_port:
-            wake_command.extend(["--udp-audio-port", str(udp_audio_port)])
+        udp_audio = profile.get("wake.porcupine.udp_audio", "")
+        if udp_audio:
+            add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
 
         return wake_command
 
@@ -544,9 +552,9 @@ def get_wake(
             mqtt_password,
         )
 
-        udp_audio_port = profile.get("wake.snowboy.udp_audio_port", "")
-        if udp_audio_port:
-            wake_command.extend(["--udp-audio-port", str(udp_audio_port)])
+        udp_audio = profile.get("wake.snowboy.udp_audio", "")
+        if udp_audio:
+            add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
 
         # Default settings
         sensitivity = str(profile.get("wake.snowboy.sensitivity", "0.5"))
@@ -614,9 +622,9 @@ def get_wake(
             mqtt_password,
         )
 
-        udp_audio_port = profile.get("wake.precise.udp_audio_port", "")
-        if udp_audio_port:
-            wake_command.extend(["--udp-audio-port", str(udp_audio_port)])
+        udp_audio = profile.get("wake.precise.udp_audio", "")
+        if udp_audio:
+            add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
 
         return wake_command
 
@@ -662,9 +670,9 @@ def get_wake(
             mqtt_password,
         )
 
-        udp_audio_port = profile.get("wake.pocketsphinx.udp_audio_port", "")
-        if udp_audio_port:
-            wake_command.extend(["--udp-audio-port", str(udp_audio_port)])
+        udp_audio = profile.get("wake.pocketsphinx.udp_audio", "")
+        if udp_audio:
+            add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
 
         mllr_matrix = profile.get("wake.pocketsphinx.mllr_matrix")
         if mllr_matrix:
@@ -745,6 +753,42 @@ def print_wake(
         print("[program:wake_word]", file=out_file)
         print("command=", " ".join(wake_command), sep="", file=out_file)
         write_boilerplate(out_file)
+
+
+def add_udp_audio_settings(command: typing.List[str], udp_audio: str, site_id: str):
+    """Parse UDP audio settings."""
+
+    # Comma-separated list of host:port:siteId
+    for udp_settings_str in udp_audio.split(","):
+        udp_settings = udp_settings_str.split(":")
+        udp_host = "127.0.0.1"
+        udp_port: typing.Optional[int] = None
+        udp_site_id = site_id
+
+        if len(udp_settings) == 1:
+            # Port only
+            udp_port = int(udp_settings[0])
+        elif len(udp_settings) == 2:
+            # Host/port only
+            udp_host = udp_settings[0]
+            udp_port = int(udp_settings[1])
+        elif len(udp_settings) > 2:
+            # Host/port/siteId
+            udp_host = udp_settings[0]
+            udp_port = int(udp_settings[1])
+            udp_site_id = udp_settings[2]
+
+        assert udp_port is not None, "No UDP port"
+
+        # Add to command
+        command.extend(
+            [
+                "--udp-audio",
+                shlex.quote(udp_host),
+                str(udp_port),
+                shlex.quote(udp_site_id),
+            ]
+        )
 
 
 # -----------------------------------------------------------------------------
