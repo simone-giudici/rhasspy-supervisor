@@ -1198,6 +1198,11 @@ def get_speech_to_text(
             _LOGGER.error("DeepSpeech trie is required")
             return []
 
+        alphabet = profile.get("speech_to_text.deepspeech.alphabet")
+        if not alphabet:
+            _LOGGER.error("DeepSpeech alphabet is required")
+            return []
+
         stt_command = [
             "rhasspy-asr-deepspeech-hermes",
             "--model",
@@ -1206,6 +1211,8 @@ def get_speech_to_text(
             shlex.quote(str(write_path(profile, language_model))),
             "--trie",
             shlex.quote(str(write_path(profile, trie))),
+            "--alphabet",
+            shlex.quote(str(write_path(profile, alphabet))),
         ]
 
         add_standard_args(
