@@ -1497,6 +1497,46 @@ def get_intent_recognition(
 
         return intent_command
 
+    if intent_system == "snips":
+        language = profile.get("intent.snips.language") or profile.get("language", "en")
+        if not language:
+            _LOGGER.error("intent.snips.language is required")
+            return []
+
+        intent_command = [
+            "rhasspy-snips-nlu-hermes",
+            "--language",
+            shlex.quote(str(language)),
+        ]
+
+        add_standard_args(
+            profile,
+            intent_command,
+            site_ids,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
+        )
+
+        engine_path = profile.get("intent.snips.engine_dir")
+        if engine_path:
+            intent_command.extend(
+                ["--engine-path", shlex.quote(str(write_path(profile, engine_path)))]
+            )
+
+        dataset_path = profile.get("intent.snips.dataset_file")
+        if dataset_path:
+            intent_command.extend(
+                ["--dataset-path", shlex.quote(str(write_path(profile, dataset_path)))]
+            )
+
+        # Case transformation
+        if dictionary_casing:
+            intent_command.extend(["--casing", dictionary_casing])
+
+        return intent_command
+
     if intent_system == "remote":
         url = profile.get("intent.remote.url")
         if not url:
