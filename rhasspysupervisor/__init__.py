@@ -265,6 +265,39 @@ def add_standard_args(
         command.extend(["--username", shlex.quote(str(mqtt_username))])
         command.extend(["--password", shlex.quote(str(mqtt_password))])
 
+    # TLS
+    tls_enabled = profile.get("mqtt.tls.enabled", False)
+    if tls_enabled:
+        command.append("--tls")
+
+        # Certificate Authority certs
+        tls_ca_certs = profile.get("mqtt.tls.ca_certs")
+        if tls_ca_certs:
+            command.extend(["--tls-ca-certs", shlex.quote(str(tls_ca_certs))])
+
+        # CERT_REQUIRED, CERT_OPTIONAL, CERT_NONE
+        tls_cert_reqs = profile.get("mqtt.tls.cert_reqs")
+        if tls_cert_reqs:
+            command.extend(["--tls-cert-reqs", shlex.quote(str(tls_cert_reqs))])
+
+        # PEM
+        tls_certfile = profile.get("mqtt.tls.certfile")
+        if tls_certfile:
+            command.extend(["--tls-certfile", shlex.quote(str(tls_certfile))])
+
+        tls_keyfile = profile.get("mqtt.tls.keyfile")
+        if tls_keyfile:
+            command.extend(["--tls-keyfile", shlex.quote(str(tls_keyfile))])
+
+        # Cipers/version
+        tls_ciphers = profile.get("mqtt.tls.ciphers")
+        if tls_ciphers:
+            command.extend(["--tls-ciphers", shlex.quote(str(tls_ciphers))])
+
+        tls_version = profile.get("mqtt.tls.version")
+        if tls_version:
+            command.extend(["--tls-version", shlex.quote(str(tls_version))])
+
     log_format = profile.get("logging.format", "")
     if log_format:
         command.extend(["--log-format", shlex.quote(str(log_format))])
