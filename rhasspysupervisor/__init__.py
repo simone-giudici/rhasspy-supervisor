@@ -844,6 +844,7 @@ def get_speech_to_text(
             _LOGGER.error("speech_to_text.pocketsphinx.acoustic_model is required")
             return []
 
+        # Open transcription
         open_transcription = bool(
             profile.get("speech_to_text.pocketsphinx.open_transcription", False)
         )
@@ -941,6 +942,29 @@ def get_speech_to_text(
                 ]
             )
 
+        # Mixed language model
+        base_lm_fst = profile.get("speech_to_text.pocketsphinx.base_language_model_fst")
+        if base_lm_fst:
+            stt_command.extend(
+                [
+                    "--base-language-model-fst",
+                    shlex.quote(str(write_path(profile, base_lm_fst))),
+                ]
+            )
+
+        base_lm_weight = str(profile.get("speech_to_text.pocketsphinx.mix_weight", ""))
+        if base_lm_weight:
+            stt_command.extend(["--base-language-model-weight", str(base_lm_weight)])
+
+        mix_lm_fst = profile.get("speech_to_text.pocketsphinx.mix_fst")
+        if mix_lm_fst:
+            stt_command.extend(
+                [
+                    "--mixed-language-model-fst",
+                    shlex.quote(str(write_path(profile, mix_lm_fst))),
+                ]
+            )
+
         # Silence detection
         skip_sec = str(profile.get("command.webrtcvad.skip_sec", ""))
         if skip_sec:
@@ -977,6 +1001,7 @@ def get_speech_to_text(
 
         model_dir = write_path(profile, model_dir)
 
+        # Open transcription
         open_transcription = bool(
             profile.get("speech_to_text.kaldi.open_transcription", False)
         )
@@ -1078,6 +1103,29 @@ def get_speech_to_text(
                 [
                     "--unknown-words",
                     shlex.quote(str(write_path(profile, unknown_words))),
+                ]
+            )
+
+        # Mixed language model
+        base_lm_fst = profile.get("speech_to_text.kaldi.base_language_model_fst")
+        if base_lm_fst:
+            stt_command.extend(
+                [
+                    "--base-language-model-fst",
+                    shlex.quote(str(write_path(profile, base_lm_fst))),
+                ]
+            )
+
+        base_lm_weight = str(profile.get("speech_to_text.kaldi.mix_weight", ""))
+        if base_lm_weight:
+            stt_command.extend(["--base-language-model-weight", str(base_lm_weight)])
+
+        mix_lm_fst = profile.get("speech_to_text.kaldi.mix_fst")
+        if mix_lm_fst:
+            stt_command.extend(
+                [
+                    "--mixed-language-model-fst",
+                    shlex.quote(str(write_path(profile, mix_lm_fst))),
                 ]
             )
 
@@ -1210,6 +1258,7 @@ def get_speech_to_text(
             _LOGGER.error("speech_to_text.deepspeech.acoustic_model is required")
             return []
 
+        # Open transcription
         open_transcription = bool(
             profile.get("speech_to_text.deepspeech.open_transcription", False)
         )
@@ -1261,6 +1310,29 @@ def get_speech_to_text(
         if open_transcription:
             # Don't overwrite dictionary or language model during training
             stt_command.append("--no-overwrite-train")
+
+        # Mixed language model
+        base_lm_fst = profile.get("speech_to_text.deepspeech.base_language_model_fst")
+        if base_lm_fst:
+            stt_command.extend(
+                [
+                    "--base-language-model-fst",
+                    shlex.quote(str(write_path(profile, base_lm_fst))),
+                ]
+            )
+
+        base_lm_weight = str(profile.get("speech_to_text.deepspeech.mix_weight", ""))
+        if base_lm_weight:
+            stt_command.extend(["--base-language-model-weight", str(base_lm_weight)])
+
+        mix_lm_fst = profile.get("speech_to_text.deepspeech.mix_fst")
+        if mix_lm_fst:
+            stt_command.extend(
+                [
+                    "--mixed-language-model-fst",
+                    shlex.quote(str(write_path(profile, mix_lm_fst))),
+                ]
+            )
 
         # Silence detection
         skip_sec = str(profile.get("command.webrtcvad.skip_sec", ""))
