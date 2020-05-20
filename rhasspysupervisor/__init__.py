@@ -2002,26 +2002,13 @@ def get_text_to_speech(
         return tts_command
 
     if tts_system == "picotts":
-        picotts_command = ["pico2wave", "-l", "{lang}"]
-        picotts_command.extend(["-w", "$t", '"$0"'])
-
-        # pico2wave REALLY wants to write to a real file, so we have to wrap it
-        # in a small script to use a temporary one.
-        picotts_command_str = " ".join(str(v) for v in picotts_command)
-        bash_command = [
-            "bash",
-            "-c",
-            shlex.quote(
-                "t=$(mktemp --suffix .wav); function x() {{ rm -f $t; }}; trap x EXIT; "
-                + picotts_command_str
-                + "; cat $t"
-            ),
-        ]
+        picotts_command = ["pico2wave", "-l", "{lang}", "-w", "{file}"]
 
         tts_command = [
             "rhasspy-tts-cli-hermes",
             "--tts-command",
-            shlex.quote(" ".join(str(v) for v in bash_command)),
+            shlex.quote(" ".join(str(v) for v in picotts_command)),
+            "--temporary-wav",
         ]
 
         add_standard_args(
@@ -2039,6 +2026,39 @@ def get_text_to_speech(
         if locale:
             locale = locale.replace("_", "-")
             tts_command.extend(["--language", shlex.quote(str(locale))])
+
+        return tts_command
+
+    if tts_system == "nanotts":
+        nanotts_command = ["nanotts", "-v", "{lang}", "-o", "{file}"]
+        tts_command = [
+            "rhasspy-tts-cli-hermes",
+            "--tts-command",
+            shlex.quote(" ".join(str(v) for v in nanotts_command)),
+            "--temporary-wav",
+            "--text-on-stdin",
+        ]
+
+        add_standard_args(
+            profile,
+            tts_command,
+            site_ids,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
+        )
+
+        locale = str(profile.get("locale", "")).strip()
+
+        if locale:
+            locale = locale.replace("_", "-")
+            tts_command.extend(["--language", shlex.quote(str(locale))])
+
+        langdir = str(profile.get("text_to_speech.nanotts.langdir", ""))
+
+        if langdir:
+            tts_command.extend(["-l", shlex.quote(os.path.expandvars(str(locale)))])
 
         return tts_command
 
