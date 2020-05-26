@@ -2021,11 +2021,16 @@ def get_text_to_speech(
             mqtt_password,
         )
 
-        locale = str(profile.get("locale", "")).strip()
+        picotts_language = str(profile.get("text_to_speech.picotts.language", ""))
+        if picotts_language:
+            tts_command.extend(["--language", shlex.quote(str(picotts_language))])
+        else:
+            # Fall back to profile locale
+            locale = str(profile.get("locale", "")).strip()
 
-        if locale:
-            locale = locale.replace("_", "-")
-            tts_command.extend(["--language", shlex.quote(str(locale))])
+            if locale:
+                locale = locale.replace("_", "-")
+                tts_command.extend(["--language", shlex.quote(str(locale))])
 
         return tts_command
 
@@ -2049,11 +2054,16 @@ def get_text_to_speech(
             mqtt_password,
         )
 
-        locale = str(profile.get("locale", "")).strip()
+        nanotts_language = str(profile.get("text_to_speech.nanotts.language", ""))
+        if nanotts_language:
+            tts_command.extend(["--language", shlex.quote(str(nanotts_language))])
+        else:
+            # Fall back to profile locale
+            locale = str(profile.get("locale", "")).strip()
 
-        if locale:
-            locale = locale.replace("_", "-")
-            tts_command.extend(["--language", shlex.quote(str(locale))])
+            if locale:
+                locale = locale.replace("_", "-")
+                tts_command.extend(["--language", shlex.quote(str(locale))])
 
         langdir = str(profile.get("text_to_speech.nanotts.langdir", ""))
 
