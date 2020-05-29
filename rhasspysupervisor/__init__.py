@@ -4,6 +4,7 @@ import os
 import shlex
 import typing
 from pathlib import Path
+from urllib.parse import urljoin
 
 import yaml
 from rhasspyprofile import Profile
@@ -2137,6 +2138,72 @@ def get_text_to_speech(
             shlex.quote(" ".join(str(v) for v in voices_command)),
             "--language",
             shlex.quote(locale),
+        ]
+
+        add_standard_args(
+            profile,
+            tts_command,
+            site_ids,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
+        )
+
+        return tts_command
+
+    if tts_system == "opentts":
+        url = profile.get("text_to_speech.opentts.url", "").strip()
+        if not url:
+            _LOGGER.error("text_to_speech.opentts.url is required")
+            return []
+
+        voice = profile.get("text_to_speech.opentts.voice", "").strip()
+        if not voice:
+            _LOGGER.error("text_to_speech.opentts.voice is required")
+            return []
+
+        # Oh the things curl can do
+        opentts_command = [
+            "curl",
+            "-sS",
+            "-X",
+            "GET",
+            "-G",
+            "--output",
+            "-",
+            "--data-urlencode",
+            f"voice={voice}",
+            "--data-urlencode",
+            'text="$0"',
+            shlex.quote(urljoin(url, "api/tts")),
+        ]
+
+        # Combine into bash call so we can pass input text as $0
+        bash_command = [
+            "bash",
+            "-c",
+            shlex.quote(" ".join(str(v) for v in opentts_command)),
+        ]
+
+        voices_command = [
+            "curl",
+            "-sS",
+            "-X",
+            "GET",
+            shlex.quote(urljoin(url, "api/voices")),
+            "|",
+            "jq",
+            "--raw-output",
+            shlex.quote('keys[] as $k | "\\($k) \(.[$k] | .name)"'),
+        ]
+
+        tts_command = [
+            "rhasspy-tts-cli-hermes",
+            "--tts-command",
+            shlex.quote(" ".join(str(v) for v in bash_command)),
+            "--voices-command",
+            shlex.quote(" ".join(str(v) for v in voices_command)),
         ]
 
         add_standard_args(
