@@ -2195,7 +2195,7 @@ def get_text_to_speech(
             "|",
             "jq",
             "--raw-output",
-            shlex.quote('keys[] as $k | "\\($k) \(.[$k] | .name)"'),
+            shlex.quote('keys[] as $k | "\\($k) \\(.[$k] | .name)"'),
         ]
 
         tts_command = [
