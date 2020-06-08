@@ -1947,8 +1947,9 @@ def get_text_to_speech(
         if not voice:
             voice = profile.get("language").strip()
 
-        if voice:
+        if not voice:
             voice = "en-us"
+
         tts_command = [
             "rhasspy-tts-cli-hermes",
             "--tts-command",
