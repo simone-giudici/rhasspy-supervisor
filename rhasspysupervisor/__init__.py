@@ -2158,7 +2158,9 @@ def get_text_to_speech(
         voice = str(profile.get("text_to_speech.wavenet.voice", "Wavenet-C")).strip()
         gender = str(profile.get("text_to_speech.wavenet.gender", "FEMALE")).strip()
         sample_rate = str(profile.get("text_to_speech.wavenet.sample_rate", 22050))
-        language_code = str(profile.get("text_to_speech.wavenet.language_code", "en-US")).strip()
+        language_code = str(
+            profile.get("text_to_speech.wavenet.language_code", "en-US")
+        ).strip()
 
         tts_command = [
             "rhasspy-tts-wavenet-hermes",
