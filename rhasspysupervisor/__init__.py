@@ -2160,25 +2160,16 @@ def get_text_to_speech(
             return []
 
         voice = profile.get("text_to_speech.opentts.voice", "").strip()
-        if not voice:
-            _LOGGER.error("text_to_speech.opentts.voice is required")
-            return []
+        voice_args = []
+        if voice:
+            voice_args = ["--data-urlencode", f"voice={voice}"]
 
         # Oh the things curl can do
-        opentts_command = [
-            "curl",
-            "-sS",
-            "-X",
-            "GET",
-            "-G",
-            "--output",
-            "-",
-            "--data-urlencode",
-            f"voice={voice}",
-            "--data-urlencode",
-            'text="$0"',
-            shlex.quote(urljoin(url, "api/tts")),
-        ]
+        opentts_command = (
+            ["curl", "-sS", "-X", "GET", "-G", "--output", "-"]
+            + voice_args
+            + ["--data-urlencode", 'text="$0"', shlex.quote(urljoin(url, "api/tts"))]
+        )
 
         # Combine into bash call so we can pass input text as $0
         bash_command = [
