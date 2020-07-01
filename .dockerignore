@@ -1,4 +1,6 @@
 *
-!rhasspysupervisor
+!bin/rhasspy-supervisor
+!rhasspysupervisor/*.py
 !requirements.txt
-!requirements_rhasspy.txt
+!Makefile
+!scripts/create-venv.sh
