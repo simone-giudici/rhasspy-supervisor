@@ -2887,8 +2887,6 @@ def compose_dialogue(
         mqtt_password,
     )
 
-    assert False, dialogue_command
-
     if dialogue_command:
         service_name = dialogue_command.pop(0)
         services["dialogue"] = {
