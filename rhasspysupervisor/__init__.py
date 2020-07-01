@@ -2687,7 +2687,8 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
 
     # Webhooks
     webhooks = profile.get("webhooks", {})
-    if webhooks:
+    webhook_events = [k for k in webhooks.keys() if k != "satellite_site_ids"]
+    if webhook_events:
         satellite_site_ids = str(profile.get("webhooks.satellite_site_ids", "")).split(
             ","
         )
