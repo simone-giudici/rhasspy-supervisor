@@ -85,6 +85,10 @@ FROM ubuntu:eoan as run-ubuntu
 
 ENV LANG C.UTF-8
 
+# IFDEF PROXY
+#! RUN echo 'Acquire::http { Proxy "http://${PROXY}"; };' >> /etc/apt/apt.conf.d/01proxy
+# ENDIF
+
 RUN apt-get update && \
     apt-get install --yes --no-install-recommends \
         python3
