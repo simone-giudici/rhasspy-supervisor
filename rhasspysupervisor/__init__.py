@@ -2547,7 +2547,7 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
     if not remote_mqtt:
         # Use internal broker (mosquitto) on custom port
         mqtt_host = "mqtt"
-        mqtt_host = local_mqtt_port
+        mqtt_port = local_mqtt_port
         mqtt_username = ""
         mqtt_password = ""
         compose_mqtt(services, mqtt_port=local_mqtt_port)
@@ -2886,6 +2886,8 @@ def compose_dialogue(
         mqtt_username,
         mqtt_password,
     )
+
+    assert False, dialogue_command
 
     if dialogue_command:
         service_name = dialogue_command.pop(0)
