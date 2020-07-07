@@ -2164,15 +2164,15 @@ def get_text_to_speech(
 
         tts_command = [
             "rhasspy-tts-wavenet-hermes",
-            "--wavenet_dir",
+            "--wavenet-dir",
             shlex.quote(str(write_path(profile, "tts/googlewavenet"))),
             "--voice",
             shlex.quote(voice),
             "--gender",
             shlex.quote(gender),
-            "--sample_rate",
+            "--sample-rate",
             shlex.quote(sample_rate),
-            "--language_code",
+            "--language-code",
             shlex.quote(language_code),
         ]
 
