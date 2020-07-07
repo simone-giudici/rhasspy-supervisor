@@ -2153,6 +2153,41 @@ def get_text_to_speech(
 
         return tts_command
 
+    if tts_system == "wavenet":
+
+        voice = str(profile.get("text_to_speech.wavenet.voice", "Wavenet-C")).strip()
+        gender = str(profile.get("text_to_speech.wavenet.gender", "FEMALE")).strip()
+        sample_rate = str(profile.get("text_to_speech.wavenet.sample_rate", 22050))
+        language_code = str(
+            profile.get("text_to_speech.wavenet.language_code", "en-US")
+        ).strip()
+
+        tts_command = [
+            "rhasspy-tts-wavenet-hermes",
+            "--wavenet_dir",
+            shlex.quote(str(write_path(profile, "tts/googlewavenet"))),
+            "--voice",
+            shlex.quote(voice),
+            "--gender",
+            shlex.quote(gender),
+            "--sample_rate",
+            shlex.quote(sample_rate),
+            "--language_code",
+            shlex.quote(language_code),
+        ]
+
+        add_standard_args(
+            profile,
+            tts_command,
+            site_ids,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
+        )
+
+        return tts_command
+
     if tts_system == "opentts":
         url = profile.get("text_to_speech.opentts.url", "").strip()
         if not url:
