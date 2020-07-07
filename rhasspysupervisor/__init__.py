@@ -2162,10 +2162,22 @@ def get_text_to_speech(
             profile.get("text_to_speech.wavenet.language_code", "en-US")
         ).strip()
 
+        credentials_json = profile.get("text_to_speech.wavenet.credentials_json")
+        if not credentials_json:
+            _LOGGER.error("text_to_speech.wavenet.credentials_json required")
+            return []
+
+        cache_dir = profile.get("text_to_speech.wavenet.cache_dir")
+        if not cache_dir:
+            _LOGGER.error("text_to_speech.wavenet.cache_dir is required")
+            return []
+
         tts_command = [
             "rhasspy-tts-wavenet-hermes",
-            "--wavenet-dir",
-            shlex.quote(str(write_path(profile, "tts/googlewavenet"))),
+            "--credentials-json",
+            shlex.quote(str(write_path(profile, credentials_json))),
+            "--cache-dir",
+            shlex.quote(str(write_path(profile, cache_dir))),
             "--voice",
             shlex.quote(voice),
             "--gender",
