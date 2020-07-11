@@ -2155,12 +2155,8 @@ def get_text_to_speech(
 
     if tts_system == "wavenet":
 
-        voice = str(profile.get("text_to_speech.wavenet.voice", "Wavenet-C")).strip()
-        gender = str(profile.get("text_to_speech.wavenet.gender", "FEMALE")).strip()
+        voice = str(profile.get("text_to_speech.wavenet.voice", "en-US-Wavenet-C")).strip()
         sample_rate = str(profile.get("text_to_speech.wavenet.sample_rate", 22050))
-        language_code = str(
-            profile.get("text_to_speech.wavenet.language_code", "en-US")
-        ).strip()
 
         credentials_json = profile.get("text_to_speech.wavenet.credentials_json")
         if not credentials_json:
@@ -2180,12 +2176,8 @@ def get_text_to_speech(
             shlex.quote(str(write_path(profile, cache_dir))),
             "--voice",
             shlex.quote(voice),
-            "--gender",
-            shlex.quote(gender),
             "--sample-rate",
             shlex.quote(sample_rate),
-            "--language-code",
-            shlex.quote(language_code),
         ]
 
         add_standard_args(
