@@ -716,6 +716,45 @@ def get_wake(
 
         return wake_command
 
+    if wake_system == "raven":
+        wake_command = ["rhasspy-wake-raven-hermes"]
+
+        template_dir = profile.get("wake.raven.template_dir")
+        if template_dir:
+            wake_command.extend(
+                ["--template-dir", shlex.quote(str(write_path(profile, template_dir)))]
+            )
+
+        probability_threshold = profile.get("wake.raven.probability_threshold")
+        if probability_threshold:
+            wake_command.extend(
+                [
+                    "--probability-threshold",
+                    str(probability_threshold[0]),
+                    str(probability_threshold[1]),
+                ]
+            )
+
+        minimum_matches = profile.get("wake.raven.minimum_matches")
+        if minimum_matches:
+            wake_command.extend(["--minimum-matches", str(minimum_matches)])
+
+        add_standard_args(
+            profile,
+            wake_command,
+            site_ids,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
+        )
+
+        udp_audio = profile.get("wake.raven.udp_audio", "")
+        if udp_audio:
+            add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
+
+        return wake_command
+
     if wake_system == "command":
         user_program = profile.get("wake.command.program")
         if not user_program:
