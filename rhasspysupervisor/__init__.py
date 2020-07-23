@@ -727,13 +727,7 @@ def get_wake(
 
         probability_threshold = profile.get("wake.raven.probability_threshold")
         if probability_threshold:
-            wake_command.extend(
-                [
-                    "--probability-threshold",
-                    str(probability_threshold[0]),
-                    str(probability_threshold[1]),
-                ]
-            )
+            wake_command.extend(["--probability-threshold", str(probability_threshold)])
 
         minimum_matches = profile.get("wake.raven.minimum_matches")
         if minimum_matches:
