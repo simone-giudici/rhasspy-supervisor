@@ -733,6 +733,14 @@ def get_wake(
         if minimum_matches:
             wake_command.extend(["--minimum-matches", str(minimum_matches)])
 
+        average_templates = profile.get("wake.raven.average_templates", True)
+        if average_templates:
+            wake_command.append("--average-templates")
+
+        vad_sensitivity = profile.get("wake.raven.vad_sensitivity", 1)
+        if vad_sensitivity:
+            wake_command.extend(["--vad-sensitivity", str(vad_sensitivity)])
+
         add_standard_args(
             profile,
             wake_command,
