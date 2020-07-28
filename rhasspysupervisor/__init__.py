@@ -719,11 +719,29 @@ def get_wake(
     if wake_system == "raven":
         wake_command = ["rhasspy-wake-raven-hermes"]
 
-        template_dir = profile.get("wake.raven.template_dir")
-        if template_dir:
+        template_dir = profile.get("wake.raven.template_dir", "raven")
+        if not template_dir:
+            _LOGGER.error("wake.raven.template_dir is required")
+            return []
+
+        keywords = profile.get("wake.raven.keywords", {})
+        if not keywords:
+            keywords = {"default": {}}
+
+        for keyword_dir_name, keyword_settings in keywords.items():
+            # Add keyword as a directory relative to the template dir
             wake_command.extend(
-                ["--template-dir", shlex.quote(str(write_path(profile, template_dir)))]
+                [
+                    "--keyword",
+                    shlex.quote(
+                        str(write_path(profile, template_dir, keyword_dir_name))
+                    ),
+                ]
             )
+
+            # Override settings for specific keyword
+            for setting_name, setting_value in keyword_settings.items():
+                wake_command.append(shlex.quote(f"{setting_name}={setting_value}"))
 
         probability_threshold = profile.get("wake.raven.probability_threshold")
         if probability_threshold:
