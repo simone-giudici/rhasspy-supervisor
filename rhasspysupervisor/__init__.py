@@ -741,6 +741,19 @@ def get_wake(
         if vad_sensitivity:
             wake_command.extend(["--vad-sensitivity", str(vad_sensitivity)])
 
+        # Positive examples
+        examples_dir = profile.get("wake.raven.examples_dir")
+        if examples_dir:
+            wake_command.extend(
+                ["--examples-dir", shlex.quote(str(write_path(profile, examples_dir)))]
+            )
+
+        examples_format = profile.get("wake.raven.examples_format")
+        if examples_format:
+            wake_command.extend(
+                ["--examples-format", shlex.quote(str(examples_format))]
+            )
+
         add_standard_args(
             profile,
             wake_command,
