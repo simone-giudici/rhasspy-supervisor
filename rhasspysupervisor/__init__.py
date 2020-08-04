@@ -1134,6 +1134,13 @@ def get_speech_to_text(
                     ]
                 )
 
+            # ARPA or text FST (G.fst)
+            language_model_type = profile.get(
+                "speech_to_text.kaldi.language_model_type"
+            )
+            if language_model_type:
+                stt_command.extend(["--language-model-type", str(language_model_type)])
+
         base_dictionary = profile.get("speech_to_text.kaldi.base_dictionary")
         if base_dictionary:
             stt_command.extend(
