@@ -1872,7 +1872,7 @@ def get_intent_handling(
         if not user_program:
             _LOGGER.error("handle.command.program is required")
             return []
-        
+
         user_program = os.path.expandvars(user_program)
         user_command = [user_program] + command_args(
             profile.get("handle.command.arguments", [])
