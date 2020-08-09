@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import yaml
+
 from rhasspyprofile import Profile
 
 _LOGGER = logging.getLogger("rhasspysupervisor")
@@ -2155,7 +2156,9 @@ def get_text_to_speech(
 
     if tts_system == "wavenet":
 
-        voice = str(profile.get("text_to_speech.wavenet.voice", "en-US-Wavenet-C")).strip()
+        voice = str(
+            profile.get("text_to_speech.wavenet.voice", "en-US-Wavenet-C")
+        ).strip()
         sample_rate = str(profile.get("text_to_speech.wavenet.sample_rate", 22050))
 
         credentials_json = profile.get("text_to_speech.wavenet.credentials_json")
