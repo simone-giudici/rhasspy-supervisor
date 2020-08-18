@@ -7,7 +7,6 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import yaml
-
 from rhasspyprofile import Profile
 
 _LOGGER = logging.getLogger("rhasspysupervisor")
