@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import yaml
+
 from rhasspyprofile import Profile
 
 _LOGGER = logging.getLogger("rhasspysupervisor")
@@ -1104,6 +1105,11 @@ def get_speech_to_text(
             "--graph-dir",
             shlex.quote(str(graph)),
         ]
+
+        # Spoken noise phone (SPN for <unk>)
+        spn_phone = profile.get("speech_to_text.kaldi.spn_phone")
+        if spn_phone:
+            stt_command.extend(["--spn-phone", str(spn_phone)])
 
         add_standard_args(
             profile,
@@ -2318,6 +2324,86 @@ def get_text_to_speech(
             "--voices-command",
             shlex.quote(" ".join(str(v) for v in voices_command)),
         ]
+
+        add_standard_args(
+            profile,
+            tts_command,
+            site_ids,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
+        )
+
+        return tts_command
+
+    if tts_system == "larynx":
+        voices = typing.cast(
+            typing.Dict[str, typing.Dict[str, str]],
+            profile.get("text_to_speech.larynx.voices", {}),
+        )
+
+        if not voices:
+            _LOGGER.error("text_to_speech.larynx.voices is required")
+            return []
+
+        default_voice = str(profile.get("text_to_speech.larynx.default_voice", ""))
+        if not default_voice:
+            default_voice = next(iter(voices.keys()))
+            _LOGGER.warning("No default voice set. Using %s", default_voice)
+
+        tts_command = [
+            "rhasspy-tts-larynx-hermes",
+            "--default-voice",
+            shlex.quote(str(default_voice)),
+        ]
+
+        for voice, voice_settings in voices.items():
+            # Path to TTS model checkpoint (.pth.tar)
+            tts_command.extend(
+                [
+                    "--model",
+                    shlex.quote(voice),
+                    shlex.quote(str(write_path(profile, voice_settings["model"]))),
+                ]
+            )
+
+            # Path to TTS model JSON configuration file.
+            # If not given, config.json is assumed to exist in the directory of
+            # the model.
+            voice_config = voice_settings.get("config")
+            if voice_config:
+                tts_command.extend(
+                    [
+                        "--config",
+                        shlex.quote(voice),
+                        shlex.quote(str(write_path(profile, voice_config))),
+                    ]
+                )
+
+            # Path to vocoder model checkpoint (.pth.tar)
+            voice_vocoder_model = voice_settings.get("vocoder_model")
+            if voice_vocoder_model:
+                tts_command.extend(
+                    [
+                        "--vocoder-model",
+                        shlex.quote(voice),
+                        shlex.quote(str(write_path(profile, voice_vocoder_model))),
+                    ]
+                )
+
+            # Path to vocoder model JSON configuration file.
+            # If not given, config.json is assumed to exist in the directory of
+            # the vocoder model.
+            voice_vocoder_config = voice_settings.get("vocoder_config")
+            if voice_vocoder_config:
+                tts_command.extend(
+                    [
+                        "--vocoder-config",
+                        shlex.quote(voice),
+                        shlex.quote(str(write_path(profile, voice_vocoder_config))),
+                    ]
+                )
 
         add_standard_args(
             profile,
