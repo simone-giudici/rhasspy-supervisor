@@ -727,6 +727,17 @@ def get_wake(
 
         keywords = profile.get("wake.raven.keywords", {})
         if not keywords:
+            # Try to automatically detect keywords
+            keywords_dir = write_path(profile, template_dir)
+            if keywords_dir.is_dir():
+                for keyword_dir in keywords_dir.iterdir():
+                    if keyword_dir.is_dir():
+                        if not keywords:
+                            keywords = {}
+
+                        keywords[keyword_dir.name] = {}
+
+        if not keywords:
             keywords = {"default": {}}
 
         for keyword_dir_name, keyword_settings in keywords.items():
