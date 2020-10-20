@@ -7,7 +7,6 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import yaml
-
 from rhasspyprofile import Profile
 
 _LOGGER = logging.getLogger("rhasspysupervisor")
@@ -187,6 +186,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
             profile,
             out_file,
             site_ids=(master_site_ids + satellite_site_ids),
+            master_site_ids=master_site_ids,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -1941,6 +1941,7 @@ def get_dialogue(
     dialogue_system: str,
     profile: Profile,
     site_ids: typing.List[str],
+    master_site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -1977,6 +1978,11 @@ def get_dialogue(
                         ["--sound", sound_name, shlex.quote(str(sound_path))]
                     )
 
+        if sound_system == "dummy":
+            # Disable dialogue sounds on the base station for extra speed
+            for site_id in master_site_ids:
+                dialogue_command.extend(["--no-sound", site_id])
+
         return dialogue_command
 
     raise ValueError(f"Unsupported dialogue system (got {dialogue_system})")
@@ -1987,6 +1993,7 @@ def print_dialogue(
     profile: Profile,
     out_file: typing.TextIO,
     site_ids: typing.List[str],
+    master_site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -1997,6 +2004,7 @@ def print_dialogue(
         dialogue_system,
         profile,
         site_ids,
+        master_site_ids,
         mqtt_host,
         mqtt_port,
         mqtt_username,
@@ -2884,6 +2892,7 @@ def profile_to_docker(profile: Profile, out_file: typing.TextIO, local_mqtt_port
             profile,
             services,
             site_ids=(master_site_ids + satellite_site_ids),
+            master_site_ids=master_site_ids,
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_username=mqtt_username,
@@ -3078,6 +3087,7 @@ def compose_dialogue(
     profile: Profile,
     services: typing.Dict[str, typing.Any],
     site_ids: typing.List[str],
+    master_site_ids: typing.List[str],
     mqtt_host: str = "localhost",
     mqtt_port: int = 1883,
     mqtt_username: str = "",
@@ -3088,6 +3098,7 @@ def compose_dialogue(
         dialogue_system,
         profile,
         site_ids,
+        master_site_ids,
         mqtt_host,
         mqtt_port,
         mqtt_username,
