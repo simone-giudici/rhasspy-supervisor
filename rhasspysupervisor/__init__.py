@@ -2579,7 +2579,9 @@ def get_speakers(
             _LOGGER.error("sounds.command.play_program is required")
             return []
 
-        play_command = [play_program] + profile.get("sounds.command.play_arguments", [])
+        play_command = [play_program] + command_args(
+            profile.get("sounds.command.play_arguments", [])
+        )
 
         output_command = [
             "rhasspy-speakers-cli-hermes",
