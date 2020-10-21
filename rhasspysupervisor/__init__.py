@@ -459,8 +459,8 @@ def get_microphone(
         # Command to list available audio input devices
         list_program = profile.get("microphone.command.list_program")
         if list_program:
-            list_command = [list_program] + command_args(
-                profile.get("microphone.command.list_arguments", [])
+            list_command = [list_program] + profile.get(
+                "microphone.command.list_arguments", []
             )
             mic_command.extend(
                 ["--list-command", shlex.quote(" ".join(str(v) for v in list_command))]
@@ -471,8 +471,8 @@ def get_microphone(
         # Command to test available audio input devices
         test_program = profile.get("microphone.command.test_program")
         if test_program:
-            test_command = [test_program] + command_args(
-                profile.get("microphone.command.test_arguments", [])
+            test_command = [test_program] + profile.get(
+                "microphone.command.test_arguments", []
             )
             mic_command.extend(
                 ["--test-command", shlex.quote(" ".join(str(v) for v in test_command))]
@@ -2583,8 +2583,8 @@ def get_speakers(
         # Command to list available audio output devices
         list_program = profile.get("sounds.command.list_program")
         if list_program:
-            list_command = [list_program] + command_args(
-                profile.get("sounds.command.list_arguments", [])
+            list_command = [list_program] + profile.get(
+                "sounds.command.list_arguments", []
             )
             output_command.extend(
                 ["--list-command", shlex.quote(" ".join(str(v) for v in list_command))]
