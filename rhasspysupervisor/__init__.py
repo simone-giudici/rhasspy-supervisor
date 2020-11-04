@@ -1994,6 +1994,11 @@ def get_dialogue(
             for site_id in master_site_ids:
                 dialogue_command.extend(["--no-sound", site_id])
 
+        volume = profile.get("dialogue.volume")
+        if volume is not None:
+            # Volume scalar from 0-1
+            dialogue_command.extend(["--volume", str(volume)])
+
         return dialogue_command
 
     raise ValueError(f"Unsupported dialogue system (got {dialogue_system})")
@@ -2065,6 +2070,11 @@ def get_text_to_speech(
             shlex.quote(str(voice)),
         ]
 
+        # Add volume scalar (0-1)
+        volume = profile.get("text_to_speech.espeak.volume")
+        if volume is not None:
+            tts_command.extend(["--volume", str(volume)])
+
         add_standard_args(
             profile,
             tts_command,
@@ -2096,6 +2106,11 @@ def get_text_to_speech(
             shlex.quote(voice),
         ]
 
+        # Add volume scalar (0-1)
+        volume = profile.get("text_to_speech.flite.volume")
+        if volume is not None:
+            tts_command.extend(["--volume", str(volume)])
+
         add_standard_args(
             profile,
             tts_command,
@@ -2117,6 +2132,11 @@ def get_text_to_speech(
             shlex.quote(" ".join(str(v) for v in picotts_command)),
             "--temporary-wav",
         ]
+
+        # Add volume scalar (0-1)
+        volume = profile.get("text_to_speech.picotts.volume")
+        if volume is not None:
+            tts_command.extend(["--volume", str(volume)])
 
         add_standard_args(
             profile,
@@ -2150,6 +2170,11 @@ def get_text_to_speech(
             "--temporary-wav",
             "--text-on-stdin",
         ]
+
+        # Add volume scalar (0-1)
+        volume = profile.get("text_to_speech.nanotts.volume")
+        if volume is not None:
+            tts_command.extend(["--volume", str(volume)])
 
         add_standard_args(
             profile,
@@ -2246,6 +2271,11 @@ def get_text_to_speech(
             shlex.quote(locale),
         ]
 
+        # Add volume scalar (0-1)
+        volume = profile.get("text_to_speech.marytts.volume")
+        if volume is not None:
+            tts_command.extend(["--volume", str(volume)])
+
         add_standard_args(
             profile,
             tts_command,
@@ -2274,6 +2304,11 @@ def get_text_to_speech(
         if not cache_dir:
             _LOGGER.error("text_to_speech.wavenet.cache_dir is required")
             return []
+
+        # Add volume scalar (0-1)
+        volume = profile.get("text_to_speech.wavenet.volume")
+        if volume is not None:
+            tts_command.extend(["--volume", str(volume)])
 
         tts_command = [
             "rhasspy-tts-wavenet-hermes",
@@ -2343,6 +2378,11 @@ def get_text_to_speech(
             "--voices-command",
             shlex.quote(" ".join(str(v) for v in voices_command)),
         ]
+
+        # Add volume scalar (0-1)
+        volume = profile.get("text_to_speech.opentts.volume")
+        if volume is not None:
+            tts_command.extend(["--volume", str(volume)])
 
         add_standard_args(
             profile,
@@ -2424,6 +2464,11 @@ def get_text_to_speech(
                     ]
                 )
 
+        # Add volume scalar (0-1)
+        volume = profile.get("text_to_speech.larynx.volume")
+        if volume is not None:
+            tts_command.extend(["--volume", str(volume)])
+
         add_standard_args(
             profile,
             tts_command,
@@ -2461,6 +2506,11 @@ def get_text_to_speech(
             mqtt_username,
             mqtt_password,
         )
+
+        # Add volume scalar (0-1)
+        volume = profile.get("text_to_speech.command.volume")
+        if volume is not None:
+            tts_command.extend(["--volume", str(volume)])
 
         voices_program = profile.get("text_to_speech.command.voices_program")
         if voices_program:
