@@ -2001,7 +2001,7 @@ def get_dialogue(
         volume = str(profile.get("dialogue.volume", ""))
         if volume:
             # Volume scalar from 0-1
-            dialogue_command.extend(["--volume", str(volume)])
+            dialogue_command.extend(["--volume", volume])
 
         return dialogue_command
 
@@ -2077,7 +2077,7 @@ def get_text_to_speech(
         # Add volume scalar (0-1)
         volume = str(profile.get("text_to_speech.espeak.volume", ""))
         if volume:
-            tts_command.extend(["--volume", str(volume)])
+            tts_command.extend(["--volume", volume])
 
         add_standard_args(
             profile,
@@ -2113,7 +2113,7 @@ def get_text_to_speech(
         # Add volume scalar (0-1)
         volume = str(profile.get("text_to_speech.flite.volume", ""))
         if volume:
-            tts_command.extend(["--volume", str(volume)])
+            tts_command.extend(["--volume", volume])
 
         add_standard_args(
             profile,
@@ -2140,7 +2140,7 @@ def get_text_to_speech(
         # Add volume scalar (0-1)
         volume = str(profile.get("text_to_speech.picotts.volume", ""))
         if volume:
-            tts_command.extend(["--volume", str(volume)])
+            tts_command.extend(["--volume", volume])
 
         add_standard_args(
             profile,
@@ -2178,7 +2178,7 @@ def get_text_to_speech(
         # Add volume scalar (0-1)
         volume = str(profile.get("text_to_speech.nanotts.volume", ""))
         if volume:
-            tts_command.extend(["--volume", str(volume)])
+            tts_command.extend(["--volume", volume])
 
         add_standard_args(
             profile,
@@ -2278,7 +2278,7 @@ def get_text_to_speech(
         # Add volume scalar (0-1)
         volume = str(profile.get("text_to_speech.marytts.volume", ""))
         if volume:
-            tts_command.extend(["--volume", str(volume)])
+            tts_command.extend(["--volume", volume])
 
         add_standard_args(
             profile,
@@ -2309,11 +2309,6 @@ def get_text_to_speech(
             _LOGGER.error("text_to_speech.wavenet.cache_dir is required")
             return []
 
-        # Add volume scalar (0-1)
-        volume = str(profile.get("text_to_speech.wavenet.volume", ""))
-        if volume:
-            tts_command.extend(["--volume", str(volume)])
-
         tts_command = [
             "rhasspy-tts-wavenet-hermes",
             "--credentials-json",
@@ -2325,6 +2320,11 @@ def get_text_to_speech(
             "--sample-rate",
             shlex.quote(sample_rate),
         ]
+
+        # Add volume scalar (0-1)
+        volume = str(profile.get("text_to_speech.wavenet.volume", ""))
+        if volume:
+            tts_command.extend(["--volume", volume])
 
         add_standard_args(
             profile,
@@ -2386,7 +2386,7 @@ def get_text_to_speech(
         # Add volume scalar (0-1)
         volume = str(profile.get("text_to_speech.opentts.volume", ""))
         if volume:
-            tts_command.extend(["--volume", str(volume)])
+            tts_command.extend(["--volume", volume])
 
         add_standard_args(
             profile,
@@ -2471,7 +2471,7 @@ def get_text_to_speech(
         # Add volume scalar (0-1)
         volume = str(profile.get("text_to_speech.larynx.volume", ""))
         if volume:
-            tts_command.extend(["--volume", str(volume)])
+            tts_command.extend(["--volume", volume])
 
         add_standard_args(
             profile,
@@ -2514,7 +2514,7 @@ def get_text_to_speech(
         # Add volume scalar (0-1)
         volume = str(profile.get("text_to_speech.command.volume", ""))
         if volume:
-            tts_command.extend(["--volume", str(volume)])
+            tts_command.extend(["--volume", volume])
 
         voices_program = profile.get("text_to_speech.command.voices_program")
         if voices_program:
@@ -2613,6 +2613,10 @@ def get_speakers(
             "--list-command",
             shlex.quote(" ".join(list_command)),
         ]
+
+        volume = str(profile.get("sounds.aplay.volume", ""))
+        if volume:
+            output_command.extend(["--volume", volume])
 
         add_standard_args(
             profile,
