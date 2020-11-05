@@ -417,6 +417,10 @@ def get_microphone(
         if udp_audio_port:
             mic_command.extend(["--udp-audio-port", str(udp_audio_port)])
 
+        frames_per_buffer = profile.get("microphone.pyaudio.frames_per_buffer")
+        if frames_per_buffer is not None:
+            mic_command.extend(["--frames-per-buffer", str(frames_per_buffer)])
+
         return mic_command
 
     if mic_system == "command":
