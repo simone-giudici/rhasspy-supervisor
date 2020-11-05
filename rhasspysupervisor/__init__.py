@@ -1998,8 +1998,8 @@ def get_dialogue(
             for site_id in master_site_ids:
                 dialogue_command.extend(["--no-sound", site_id])
 
-        volume = profile.get("dialogue.volume")
-        if volume is not None:
+        volume = str(profile.get("dialogue.volume", ""))
+        if volume:
             # Volume scalar from 0-1
             dialogue_command.extend(["--volume", str(volume)])
 
@@ -2075,8 +2075,8 @@ def get_text_to_speech(
         ]
 
         # Add volume scalar (0-1)
-        volume = profile.get("text_to_speech.espeak.volume")
-        if volume is not None:
+        volume = str(profile.get("text_to_speech.espeak.volume", ""))
+        if volume:
             tts_command.extend(["--volume", str(volume)])
 
         add_standard_args(
@@ -2111,8 +2111,8 @@ def get_text_to_speech(
         ]
 
         # Add volume scalar (0-1)
-        volume = profile.get("text_to_speech.flite.volume")
-        if volume is not None:
+        volume = str(profile.get("text_to_speech.flite.volume", ""))
+        if volume:
             tts_command.extend(["--volume", str(volume)])
 
         add_standard_args(
@@ -2138,8 +2138,8 @@ def get_text_to_speech(
         ]
 
         # Add volume scalar (0-1)
-        volume = profile.get("text_to_speech.picotts.volume")
-        if volume is not None:
+        volume = str(profile.get("text_to_speech.picotts.volume", ""))
+        if volume:
             tts_command.extend(["--volume", str(volume)])
 
         add_standard_args(
@@ -2176,8 +2176,8 @@ def get_text_to_speech(
         ]
 
         # Add volume scalar (0-1)
-        volume = profile.get("text_to_speech.nanotts.volume")
-        if volume is not None:
+        volume = str(profile.get("text_to_speech.nanotts.volume", ""))
+        if volume:
             tts_command.extend(["--volume", str(volume)])
 
         add_standard_args(
@@ -2276,8 +2276,8 @@ def get_text_to_speech(
         ]
 
         # Add volume scalar (0-1)
-        volume = profile.get("text_to_speech.marytts.volume")
-        if volume is not None:
+        volume = str(profile.get("text_to_speech.marytts.volume", ""))
+        if volume:
             tts_command.extend(["--volume", str(volume)])
 
         add_standard_args(
@@ -2310,8 +2310,8 @@ def get_text_to_speech(
             return []
 
         # Add volume scalar (0-1)
-        volume = profile.get("text_to_speech.wavenet.volume")
-        if volume is not None:
+        volume = str(profile.get("text_to_speech.wavenet.volume", ""))
+        if volume:
             tts_command.extend(["--volume", str(volume)])
 
         tts_command = [
@@ -2384,8 +2384,8 @@ def get_text_to_speech(
         ]
 
         # Add volume scalar (0-1)
-        volume = profile.get("text_to_speech.opentts.volume")
-        if volume is not None:
+        volume = str(profile.get("text_to_speech.opentts.volume", ""))
+        if volume:
             tts_command.extend(["--volume", str(volume)])
 
         add_standard_args(
@@ -2469,8 +2469,8 @@ def get_text_to_speech(
                 )
 
         # Add volume scalar (0-1)
-        volume = profile.get("text_to_speech.larynx.volume")
-        if volume is not None:
+        volume = str(profile.get("text_to_speech.larynx.volume", ""))
+        if volume:
             tts_command.extend(["--volume", str(volume)])
 
         add_standard_args(
@@ -2512,8 +2512,8 @@ def get_text_to_speech(
         )
 
         # Add volume scalar (0-1)
-        volume = profile.get("text_to_speech.command.volume")
-        if volume is not None:
+        volume = str(profile.get("text_to_speech.command.volume", ""))
+        if volume:
             tts_command.extend(["--volume", str(volume)])
 
         voices_program = profile.get("text_to_speech.command.voices_program")
