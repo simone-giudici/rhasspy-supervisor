@@ -2421,10 +2421,17 @@ def get_text_to_speech(
             default_voice = next(iter(voices.keys()))
             _LOGGER.warning("No default voice set. Using %s", default_voice)
 
+        cache_dir = profile.get("text_to_speech.larynx.cache_dir")
+        if not cache_dir:
+            _LOGGER.error("text_to_speech.larynx.cache_dir is required")
+            return []
+
         tts_command = [
             "rhasspy-tts-larynx-hermes",
             "--default-voice",
             shlex.quote(str(default_voice)),
+            "--cache-dir",
+            shlex.quote(str(write_path(profile, cache_dir))),
         ]
 
         for voice, voice_settings in voices.items():
