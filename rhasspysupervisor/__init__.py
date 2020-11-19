@@ -2003,6 +2003,12 @@ def get_dialogue(
             # Volume scalar from 0-1
             dialogue_command.extend(["--volume", volume])
 
+        group_separator = str(profile.get("dialogue.group_separator", ""))
+        if group_separator:
+            # String separating groups from names in site ids.
+            # Used to avoid multiple wake ups from satellites that are co-located.
+            dialogue_command.extend(["--group-separator", group_separator])
+
         return dialogue_command
 
     raise ValueError(f"Unsupported dialogue system (got {dialogue_system})")
