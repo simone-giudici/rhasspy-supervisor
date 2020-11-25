@@ -28,7 +28,11 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
     master_site_ids = str(profile.get("mqtt.site_id", "default")).split(",")
 
     mqtt_host = str(profile.get("mqtt.host", "localhost"))
-    mqtt_port = int(profile.get("mqtt.port", 1883))
+
+    try:
+        mqtt_port = int(profile.get("mqtt.port", 1883))
+    except ValueError:
+        mqtt_port = 1883
 
     mqtt_username = str(profile.get("mqtt.username", "")).strip()
     mqtt_password = str(profile.get("mqtt.password", "")).strip()
