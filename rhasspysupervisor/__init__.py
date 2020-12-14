@@ -2,6 +2,7 @@
 import logging
 import os
 import shlex
+import shutil
 import typing
 from pathlib import Path
 from urllib.parse import urljoin
@@ -2138,14 +2139,21 @@ def get_text_to_speech(
         return tts_command
 
     if tts_system == "picotts":
-        picotts_command = ["pico2wave", "-l", "{lang}", "-w", "{file}"]
+        extra_tts_args = []
+
+        if shutil.which("pico2wave"):
+            picotts_command = ["pico2wave", "-l", "{lang}", "-w", "{file}"]
+        else:
+            # Use nanotts instead
+            nanotts_command = ["nanotts", "-v", "{lang}", "-o", "{file}"]
+            extra_tts_args.append("--text-on-stdin")
 
         tts_command = [
             "rhasspy-tts-cli-hermes",
             "--tts-command",
             shlex.quote(" ".join(str(v) for v in picotts_command)),
             "--temporary-wav",
-        ]
+        ] + extra_tts_args
 
         # Add volume scalar (0-1)
         volume = str(profile.get("text_to_speech.picotts.volume", ""))
