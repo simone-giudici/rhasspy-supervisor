@@ -43,6 +43,11 @@ def main():
         help="Port to use for internal MQTT broker (default: 12183)",
     )
     parser.add_argument(
+        "--mosquitto-path",
+        default="mosquitto",
+        help="Path to mosquitto binary (default: mosquitto)",
+    )
+    parser.add_argument(
         "--debug", action="store_true", help="Print DEBUG message to console"
     )
     args = parser.parse_args()
@@ -77,7 +82,12 @@ def main():
 
         _LOGGER.debug("Generating supervisord conf")
         with open(supervisord_conf_path, "w") as conf_file:
-            profile_to_conf(profile, conf_file, local_mqtt_port=args.local_mqtt_port)
+            profile_to_conf(
+                profile,
+                conf_file,
+                local_mqtt_port=args.local_mqtt_port,
+                mosquitto_path=args.mosquitto_path,
+            )
 
         _LOGGER.debug("Wrote %s", str(supervisord_conf_path))
 

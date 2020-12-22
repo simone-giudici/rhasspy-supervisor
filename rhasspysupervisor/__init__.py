@@ -16,7 +16,12 @@ _LOGGER = logging.getLogger("rhasspysupervisor")
 # -----------------------------------------------------------------------------
 
 
-def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=12183):
+def profile_to_conf(
+    profile: Profile,
+    out_file: typing.TextIO,
+    local_mqtt_port=12183,
+    mosquitto_path="mosquitto",
+):
     """Generate supervisord conf from Rhasspy profile"""
 
     # Header
@@ -44,7 +49,7 @@ def profile_to_conf(profile: Profile, out_file: typing.TextIO, local_mqtt_port=1
         mqtt_port = local_mqtt_port
         mqtt_username = ""
         mqtt_password = ""
-        print_mqtt(out_file, mqtt_port=local_mqtt_port)
+        print_mqtt(out_file, mqtt_port=local_mqtt_port, mosquitto_path=mosquitto_path)
 
     # -------------------------------------------------------------------------
 
@@ -230,9 +235,9 @@ def write_boilerplate(out_file: typing.TextIO):
 # -----------------------------------------------------------------------------
 
 
-def print_mqtt(out_file: typing.TextIO, mqtt_port: int):
+def print_mqtt(out_file: typing.TextIO, mqtt_port: int, mosquitto_path="mosquitto"):
     """Print command for internal MQTT broker"""
-    mqtt_command = ["mosquitto", "-p", str(mqtt_port)]
+    mqtt_command = [mosquitto_path, "-p", str(mqtt_port)]
 
     if mqtt_command:
         print("[program:mqtt]", file=out_file)
