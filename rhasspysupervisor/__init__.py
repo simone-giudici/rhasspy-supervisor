@@ -1065,29 +1065,7 @@ def get_speech_to_text(
             )
 
         # Silence detection
-        skip_sec = str(profile.get("command.webrtcvad.skip_sec", ""))
-        if skip_sec:
-            stt_command.extend(["--voice-skip-seconds", skip_sec])
-
-        min_sec = str(profile.get("command.webrtcvad.min_sec", ""))
-        if min_sec:
-            stt_command.extend(["--voice-min-seconds", min_sec])
-
-        speech_sec = str(profile.get("command.webrtcvad.speech_sec", ""))
-        if speech_sec:
-            stt_command.extend(["--voice-speech-seconds", speech_sec])
-
-        silence_sec = str(profile.get("command.webrtcvad.silence_sec", ""))
-        if silence_sec:
-            stt_command.extend(["--voice-silence-seconds", silence_sec])
-
-        before_sec = str(profile.get("command.webrtcvad.before_sec", ""))
-        if before_sec:
-            stt_command.extend(["--voice-before-seconds", before_sec])
-
-        vad_mode = str(profile.get("command.webrtcvad.vad_mode", ""))
-        if vad_mode:
-            stt_command.extend(["--voice-sensitivity", vad_mode])
+        add_silence_args(stt_command, profile)
 
         return stt_command
 
@@ -1241,29 +1219,7 @@ def get_speech_to_text(
             )
 
         # Silence detection
-        skip_sec = str(profile.get("command.webrtcvad.skip_sec", ""))
-        if skip_sec:
-            stt_command.extend(["--voice-skip-seconds", skip_sec])
-
-        min_sec = str(profile.get("command.webrtcvad.min_sec", ""))
-        if min_sec:
-            stt_command.extend(["--voice-min-seconds", min_sec])
-
-        speech_sec = str(profile.get("command.webrtcvad.speech_sec", ""))
-        if speech_sec:
-            stt_command.extend(["--voice-speech-seconds", speech_sec])
-
-        silence_sec = str(profile.get("command.webrtcvad.silence_sec", ""))
-        if silence_sec:
-            stt_command.extend(["--voice-silence-seconds", silence_sec])
-
-        before_sec = str(profile.get("command.webrtcvad.before_sec", ""))
-        if before_sec:
-            stt_command.extend(["--voice-before-seconds", before_sec])
-
-        vad_mode = str(profile.get("command.webrtcvad.vad_mode", ""))
-        if vad_mode:
-            stt_command.extend(["--voice-sensitivity", vad_mode])
+        add_silence_args(stt_command, profile)
 
         return stt_command
 
@@ -1336,29 +1292,7 @@ def get_speech_to_text(
                 _LOGGER.warning("No speech to text training URL was provided")
 
         # Silence detection
-        skip_sec = str(profile.get("command.webrtcvad.skip_sec", ""))
-        if skip_sec:
-            stt_command.extend(["--voice-skip-seconds", skip_sec])
-
-        min_sec = str(profile.get("command.webrtcvad.min_sec", ""))
-        if min_sec:
-            stt_command.extend(["--voice-min-seconds", min_sec])
-
-        speech_sec = str(profile.get("command.webrtcvad.speech_sec", ""))
-        if speech_sec:
-            stt_command.extend(["--voice-speech-seconds", speech_sec])
-
-        silence_sec = str(profile.get("command.webrtcvad.silence_sec", ""))
-        if silence_sec:
-            stt_command.extend(["--voice-silence-seconds", silence_sec])
-
-        before_sec = str(profile.get("command.webrtcvad.before_sec", ""))
-        if before_sec:
-            stt_command.extend(["--voice-before-seconds", before_sec])
-
-        vad_mode = str(profile.get("command.webrtcvad.vad_mode", ""))
-        if vad_mode:
-            stt_command.extend(["--voice-sensitivity", vad_mode])
+        add_silence_args(stt_command, profile)
 
         return stt_command
 
@@ -1446,29 +1380,7 @@ def get_speech_to_text(
             )
 
         # Silence detection
-        skip_sec = str(profile.get("command.webrtcvad.skip_sec", ""))
-        if skip_sec:
-            stt_command.extend(["--voice-skip-seconds", skip_sec])
-
-        min_sec = str(profile.get("command.webrtcvad.min_sec", ""))
-        if min_sec:
-            stt_command.extend(["--voice-min-seconds", min_sec])
-
-        speech_sec = str(profile.get("command.webrtcvad.speech_sec", ""))
-        if speech_sec:
-            stt_command.extend(["--voice-speech-seconds", speech_sec])
-
-        silence_sec = str(profile.get("command.webrtcvad.silence_sec", ""))
-        if silence_sec:
-            stt_command.extend(["--voice-silence-seconds", silence_sec])
-
-        before_sec = str(profile.get("command.webrtcvad.before_sec", ""))
-        if before_sec:
-            stt_command.extend(["--voice-before-seconds", before_sec])
-
-        vad_mode = str(profile.get("command.webrtcvad.vad_mode", ""))
-        if vad_mode:
-            stt_command.extend(["--voice-sensitivity", vad_mode])
+        add_silence_args(stt_command, profile)
 
         return stt_command
 
@@ -3326,6 +3238,58 @@ def add_ssl_args(command: typing.List[str], profile: Profile):
 
     if keyfile:
         command.extend(["--keyfile", shlex.quote(os.path.expandvars(str(keyfile)))])
+
+
+def add_silence_args(command: typing.List[str], profile: Profile):
+    """Add silence detection arguments."""
+    skip_sec = str(profile.get("command.webrtcvad.skip_sec", ""))
+    if skip_sec:
+        command.extend(["--voice-skip-seconds", skip_sec])
+
+    min_sec = str(profile.get("command.webrtcvad.min_sec", ""))
+    if min_sec:
+        command.extend(["--voice-min-seconds", min_sec])
+
+    speech_sec = str(profile.get("command.webrtcvad.speech_sec", ""))
+    if speech_sec:
+        command.extend(["--voice-speech-seconds", speech_sec])
+
+    silence_sec = str(profile.get("command.webrtcvad.silence_sec", ""))
+    if silence_sec:
+        command.extend(["--voice-silence-seconds", silence_sec])
+
+    before_sec = str(profile.get("command.webrtcvad.before_sec", ""))
+    if before_sec:
+        command.extend(["--voice-before-seconds", before_sec])
+
+    vad_mode = str(profile.get("command.webrtcvad.vad_mode", ""))
+    if vad_mode:
+        command.extend(["--voice-sensitivity", vad_mode])
+
+    silence_method = str(profile.get("command.webrtcvad.silence_method", ""))
+    if silence_method:
+        command.extend(["--voice-silence-method", silence_method])
+
+    current_energy_threshold = str(
+        profile.get("command.webrtcvad.current_energy_threshold", "")
+    )
+    if current_energy_threshold:
+        command.extend(["--voice-current-energy-threshold", current_energy_threshold])
+
+    max_energy = str(profile.get("command.webrtcvad.max_energy", ""))
+    if max_energy:
+        command.extend(["--voice-max-energy", max_energy])
+
+    max_current_energy_ratio_threshold = str(
+        profile.get("command.webrtcvad.max_current_energy_ratio_threshold", "")
+    )
+    if max_current_energy_ratio_threshold:
+        command.extend(
+            [
+                "--voice-max-current-energy-ratio-threshold",
+                max_current_energy_ratio_threshold,
+            ]
+        )
 
 
 def command_args(
