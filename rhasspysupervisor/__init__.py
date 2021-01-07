@@ -1312,17 +1312,17 @@ def get_speech_to_text(
             language_model = profile.get(
                 "speech_to_text.deepspeech.base_language_model"
             )
-            trie = profile.get("speech_to_text.deepspeech.base_trie")
+            scorer = profile.get("speech_to_text.deepspeech.base_scorer")
         else:
             language_model = profile.get("speech_to_text.deepspeech.language_model")
-            trie = profile.get("speech_to_text.deepspeech.trie")
+            scorer = profile.get("speech_to_text.deepspeech.scorer")
 
         if not language_model:
             _LOGGER.error("DeepSpeech language model required")
             return []
 
-        if not trie:
-            _LOGGER.error("DeepSpeech trie is required")
+        if not scorer:
+            _LOGGER.error("DeepSpeech scorer is required")
             return []
 
         alphabet = profile.get("speech_to_text.deepspeech.alphabet")
@@ -1336,8 +1336,8 @@ def get_speech_to_text(
             shlex.quote(str(write_path(profile, acoustic_model))),
             "--language-model",
             shlex.quote(str(write_path(profile, language_model))),
-            "--trie",
-            shlex.quote(str(write_path(profile, trie))),
+            "--scorer",
+            shlex.quote(str(write_path(profile, scorer))),
             "--alphabet",
             shlex.quote(str(write_path(profile, alphabet))),
         ]
@@ -1378,6 +1378,14 @@ def get_speech_to_text(
                     shlex.quote(str(write_path(profile, mix_lm_fst))),
                 ]
             )
+
+        lm_alpha = str(profile.get("speech_to_text.deepspeech.lm_alpha", ""))
+        if lm_alpha:
+            stt_command.extend(["--lm-alpha", lm_alpha])
+
+        lm_beta = str(profile.get("speech_to_text.deepspeech.lm_beta", ""))
+        if lm_beta:
+            stt_command.extend(["--lm-beta", lm_beta])
 
         # Silence detection
         add_silence_args(stt_command, profile)
