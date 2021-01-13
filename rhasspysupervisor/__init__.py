@@ -755,6 +755,9 @@ def get_wake(
             keywords = {"default": {}}
 
         for keyword_dir_name, keyword_settings in keywords.items():
+            if not keyword_settings.get("enabled", True):
+                continue
+
             # Add keyword as a directory relative to the template dir
             wake_command.extend(
                 [
@@ -3257,6 +3260,10 @@ def add_silence_args(command: typing.List[str], profile: Profile):
     min_sec = str(profile.get("command.webrtcvad.min_sec", ""))
     if min_sec:
         command.extend(["--voice-min-seconds", min_sec])
+
+    max_sec = str(profile.get("command.webrtcvad.max_sec", ""))
+    if max_sec:
+        command.extend(["--voice-max-seconds", max_sec])
 
     speech_sec = str(profile.get("command.webrtcvad.speech_sec", ""))
     if speech_sec:
