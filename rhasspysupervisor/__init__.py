@@ -1480,6 +1480,12 @@ def get_intent_recognition(
         if dictionary_casing:
             intent_command.extend(["--casing", dictionary_casing])
 
+        # Directory with custom converter scripts
+        converters_dir = profile.get("intent.fsticuffs.converters_dir", "converters")
+        intent_command.extend(
+            ["--converters-dir", shlex.quote(str(write_path(profile, converters_dir)))]
+        )
+
         return intent_command
 
     if intent_system == "fuzzywuzzy":
@@ -1526,6 +1532,12 @@ def get_intent_recognition(
         # Case transformation
         if dictionary_casing:
             intent_command.extend(["--casing", dictionary_casing])
+
+        # Directory with custom converter scripts
+        converters_dir = profile.get("intent.fuzzywuzzy.converters_dir", "converters")
+        intent_command.extend(
+            ["--converters-dir", shlex.quote(str(write_path(profile, converters_dir)))]
+        )
 
         return intent_command
 
