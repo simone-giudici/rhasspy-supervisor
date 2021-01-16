@@ -2085,7 +2085,7 @@ def get_text_to_speech(
             picotts_command = ["pico2wave", "-l", "{lang}", "-w", "{file}"]
         else:
             # Use nanotts instead
-            nanotts_command = ["nanotts", "-v", "{lang}", "-o", "{file}"]
+            picotts_command = ["nanotts", "-v", "{lang}", "-o", "{file}"]
             extra_tts_args.append("--text-on-stdin")
 
         tts_command = [
