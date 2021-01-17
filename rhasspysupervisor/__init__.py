@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import yaml
+
 from rhasspyprofile import Profile
 
 _LOGGER = logging.getLogger("rhasspysupervisor")
@@ -740,22 +741,21 @@ def get_wake(
             return []
 
         keywords = profile.get("wake.raven.keywords", {})
-        if not keywords:
-            # Try to automatically detect keywords
-            keywords_dir = write_path(profile, template_dir)
-            if keywords_dir.is_dir():
-                for keyword_dir in keywords_dir.iterdir():
-                    if keyword_dir.is_dir():
-                        if not keywords:
-                            keywords = {}
 
-                        keywords[keyword_dir.name] = {}
-
-        if not keywords:
-            keywords = {"default": {}}
+        # Try to automatically detect keywords
+        keywords_dir = write_path(profile, template_dir)
+        if keywords_dir.is_dir():
+            for keyword_dir in keywords_dir.iterdir():
+                if keyword_dir.is_dir() and (keyword_dir.name not in keywords):
+                    keywords[keyword_dir.name] = {"enabled": True}
 
         for keyword_dir_name, keyword_settings in keywords.items():
             if not keyword_settings.get("enabled", True):
+                continue
+
+            # Exclude keywords whose directory doesn't exist
+            keyword_dir = keywords_dir / keyword_dir_name
+            if not keyword_dir.is_dir():
                 continue
 
             # Add keyword as a directory relative to the template dir
