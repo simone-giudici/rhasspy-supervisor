@@ -8,7 +8,6 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import yaml
-
 from rhasspyprofile import Profile
 
 _LOGGER = logging.getLogger("rhasspysupervisor")
@@ -1953,6 +1952,17 @@ def get_dialogue(
             # String separating groups from names in site ids.
             # Used to avoid multiple wake ups from satellites that are co-located.
             dialogue_command.extend(["--group-separator", group_separator])
+
+        # ASR confidence
+        speech_system = profile.get("speech_to_text.system", "dummy")
+        if speech_system != "dummy":
+            min_asr_confidence = profile.get(
+                f"speech_to_text.{speech_system}.min_confidence"
+            )
+            if min_asr_confidence is not None:
+                dialogue_command.extend(
+                    ["--min-asr-confidence", str(min_asr_confidence)]
+                )
 
         return dialogue_command
 
