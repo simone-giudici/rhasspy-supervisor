@@ -2184,6 +2184,7 @@ def get_text_to_speech(
 
         # Oh the things curl can do
         marytts_command = [
+            '{%% if "/" in lang: %%}{%% set lang, voice = lang.split("/", maxsplit=1) %%}{%% endif %%}',
             "curl",
             "-sS",
             "-X",
@@ -2198,7 +2199,9 @@ def get_text_to_speech(
             "--data-urlencode",
             "AUDIO=WAVE",
             "--data-urlencode",
-            "LOCALE={lang}",
+            "LOCALE={{ lang }}",
+            "{%% if voice: %%}--data-urlencode{%% endif %%}",
+            "{%% if voice: %%}VOICE={{ voice }}{%% endif %%}",
             "--data-urlencode",
             'INPUT_TEXT="$0"',
             shlex.quote(url),
@@ -2241,6 +2244,7 @@ def get_text_to_speech(
             shlex.quote(" ".join(str(v) for v in voices_command)),
             "--language",
             shlex.quote(locale),
+            "--use-jinja2",
         ]
 
         # Add volume scalar (0-1)
