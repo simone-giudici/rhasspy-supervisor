@@ -6,6 +6,7 @@ import shutil
 import typing
 from pathlib import Path
 from urllib.parse import urljoin
+import itertools
 
 import yaml
 
@@ -2172,6 +2173,11 @@ def get_text_to_speech(
             _LOGGER.error("text_to_speech.marytts.url is required")
             return []
 
+        effects = profile.get("text_to_speech.marytts.effects", {})
+        effects = [('--data-urlencode', shlex.quote('%s=%s' % pair))
+                      for pair in effects.items()]
+        effects = list(itertools.chain(*effects))  # flatten tuples into list
+
         # Oh the things curl can do
         marytts_command = [
             "curl",
@@ -2189,6 +2195,7 @@ def get_text_to_speech(
             "AUDIO=WAVE",
             "--data-urlencode",
             "LOCALE={lang}",
+        ] + effects + [
             "--data-urlencode",
             'INPUT_TEXT="$0"',
             shlex.quote(url),
