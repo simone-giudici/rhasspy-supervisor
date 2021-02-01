@@ -1,4 +1,5 @@
 """Tools for generating supervisord/docker files for Rhasspy"""
+import itertools
 import logging
 import os
 import shlex
@@ -6,10 +7,8 @@ import shutil
 import typing
 from pathlib import Path
 from urllib.parse import urljoin
-import itertools
 
 import yaml
-
 from rhasspyprofile import Profile
 
 _LOGGER = logging.getLogger("rhasspysupervisor")
