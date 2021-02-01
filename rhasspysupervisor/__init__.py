@@ -2174,8 +2174,10 @@ def get_text_to_speech(
             return []
 
         effects = profile.get("text_to_speech.marytts.effects", {})
-        effects = [('--data-urlencode', shlex.quote('%s=%s' % pair))
-                   for pair in effects.items()]
+        effects = [
+            ("--data-urlencode", shlex.quote("%s=%s" % pair))
+            for pair in effects.items()
+        ]
         effects = list(itertools.chain(*effects))  # flatten tuples into list
 
         # Oh the things curl can do
