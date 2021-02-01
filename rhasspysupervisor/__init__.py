@@ -2195,11 +2195,11 @@ def get_text_to_speech(
             "AUDIO=WAVE",
             "--data-urlencode",
             "LOCALE={lang}",
-        ] + effects + [
             "--data-urlencode",
             'INPUT_TEXT="$0"',
-            shlex.quote(url),
         ]
+        marytts_command += effects
+        marytts_command.append(shlex.quote(url))
 
         voice = profile.get("text_to_speech.marytts.voice", "").strip()
         if voice:
