@@ -1,4 +1,5 @@
 """Tools for generating supervisord/docker files for Rhasspy"""
+import itertools
 import logging
 import os
 import shlex
@@ -2182,6 +2183,13 @@ def get_text_to_speech(
             _LOGGER.error("text_to_speech.marytts.url is required")
             return []
 
+        effects = profile.get("text_to_speech.marytts.effects", {})
+        effects = [
+            ("--data-urlencode", shlex.quote("%s=%s" % pair))
+            for pair in effects.items()
+        ]
+        effects = list(itertools.chain(*effects))  # flatten tuples into list
+
         # Oh the things curl can do
         marytts_command = [
             '{%% if "/" in lang: %%}{%% set lang, voice = lang.split("/", maxsplit=1) %%}{%% endif %%}',
@@ -2204,8 +2212,9 @@ def get_text_to_speech(
             "{%% if voice: %%}VOICE={{ voice }}{%% endif %%}",
             "--data-urlencode",
             'INPUT_TEXT="$0"',
-            shlex.quote(url),
         ]
+        marytts_command += effects
+        marytts_command.append(shlex.quote(url))
 
         voice = profile.get("text_to_speech.marytts.voice", "").strip()
         if voice:
