@@ -316,6 +316,13 @@ def add_standard_args(
         command.extend(["--log-format", shlex.quote(str(log_format))])
 
 
+def add_lang_args(profile: Profile, command: typing.List[str], system_type: str):
+    """Add --lang to service for setting language in messages"""
+    maybe_lang = profile.get(f"{system_type}.lang")
+    if maybe_lang:
+        command.extend(["--lang", str(maybe_lang)])
+
+
 # -----------------------------------------------------------------------------
 
 # TODO: Add chunk sizes
@@ -579,6 +586,9 @@ def get_wake(
             mqtt_password,
         )
 
+        # Add --lang
+        add_lang_args(profile, wake_command, "wake")
+
         udp_audio = profile.get("wake.porcupine.udp_audio", "")
         if udp_audio:
             add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
@@ -601,6 +611,9 @@ def get_wake(
             mqtt_username,
             mqtt_password,
         )
+
+        # Add --lang
+        add_lang_args(profile, wake_command, "wake")
 
         udp_audio = profile.get("wake.snowboy.udp_audio", "")
         if udp_audio:
@@ -672,6 +685,9 @@ def get_wake(
             mqtt_password,
         )
 
+        # Add --lang
+        add_lang_args(profile, wake_command, "wake")
+
         udp_audio = profile.get("wake.precise.udp_audio", "")
         if udp_audio:
             add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
@@ -719,6 +735,9 @@ def get_wake(
             mqtt_username,
             mqtt_password,
         )
+
+        # Add --lang
+        add_lang_args(profile, wake_command, "wake")
 
         udp_audio = profile.get("wake.pocketsphinx.udp_audio", "")
         if udp_audio:
@@ -811,6 +830,9 @@ def get_wake(
             mqtt_password,
         )
 
+        # Add --lang
+        add_lang_args(profile, wake_command, "wake")
+
         udp_audio = profile.get("wake.raven.udp_audio", "")
         if udp_audio:
             add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
@@ -842,6 +864,9 @@ def get_wake(
             mqtt_username,
             mqtt_password,
         )
+
+        # Add --lang
+        add_lang_args(profile, wake_command, "wake")
 
         # Audio format
         sample_rate = profile.get("wake.command.sample_rate")
@@ -988,6 +1013,9 @@ def get_speech_to_text(
             mqtt_password,
         )
 
+        # Add --lang
+        add_lang_args(profile, stt_command, "speech_to_text")
+
         graph = profile.get("intent.fsticuffs.intent_graph")
         if graph:
             # Path to intent graph
@@ -1127,6 +1155,9 @@ def get_speech_to_text(
             mqtt_password,
         )
 
+        # Add --lang
+        add_lang_args(profile, stt_command, "speech_to_text")
+
         if open_transcription:
             # Don't overwrite HCLG.fst during training
             stt_command.append("--no-overwrite-train")
@@ -1252,6 +1283,9 @@ def get_speech_to_text(
             mqtt_password,
         )
 
+        # Add --lang
+        add_lang_args(profile, stt_command, "speech_to_text")
+
         add_ssl_args(stt_command, profile)
 
         # Training
@@ -1282,6 +1316,9 @@ def get_speech_to_text(
             mqtt_username,
             mqtt_password,
         )
+
+        # Add --lang
+        add_lang_args(profile, stt_command, "speech_to_text")
 
         add_ssl_args(stt_command, profile)
 
@@ -1354,6 +1391,9 @@ def get_speech_to_text(
             mqtt_username,
             mqtt_password,
         )
+
+        # Add --lang
+        add_lang_args(profile, stt_command, "speech_to_text")
 
         if open_transcription:
             # Don't overwrite dictionary or language model during training
@@ -1464,6 +1504,9 @@ def get_intent_recognition(
             mqtt_password,
         )
 
+        # Add --lang
+        add_lang_args(profile, intent_command, "intent")
+
         fuzzy = profile.get("intent.fsticuffs.fuzzy", True)
         if not fuzzy:
             intent_command.append("--no-fuzzy")
@@ -1517,6 +1560,9 @@ def get_intent_recognition(
             mqtt_password,
         )
 
+        # Add --lang
+        add_lang_args(profile, intent_command, "intent")
+
         confidence_threshold = profile.get("intent.fuzzywuzzy.min_confidence")
         if confidence_threshold is not None:
             intent_command.extend(["--confidence-threshold", str(confidence_threshold)])
@@ -1562,6 +1608,9 @@ def get_intent_recognition(
             mqtt_username,
             mqtt_password,
         )
+
+        # Add --lang
+        add_lang_args(profile, intent_command, "intent")
 
         language = profile.get("intent.rasa.language")
         if language:
@@ -1622,6 +1671,9 @@ def get_intent_recognition(
             mqtt_username,
             mqtt_password,
         )
+
+        # Add --lang
+        add_lang_args(profile, intent_command, "intent")
 
         # Case transformation
         if dictionary_casing:
@@ -1705,6 +1757,9 @@ def get_intent_recognition(
             mqtt_username,
             mqtt_password,
         )
+
+        # Add --lang
+        add_lang_args(profile, intent_command, "intent")
 
         # Case transformation
         if dictionary_casing:
