@@ -2438,7 +2438,7 @@ def get_text_to_speech(
 
     if tts_system == "larynx":
         voices = typing.cast(
-            typing.Dict[str, typing.Dict[str, str]],
+            typing.Dict[str, typing.Dict[str, typing.Any]],
             profile.get("text_to_speech.larynx.voices", {}),
         )
 
@@ -2465,49 +2465,57 @@ def get_text_to_speech(
         ]
 
         for voice, voice_settings in voices.items():
-            # Path to TTS model checkpoint (.pth.tar)
+            # Voice settings look like this:
+            # {
+            #   "language": "GRUUT LANGUAGE (en-us)",
+            #   "tts_type": "LARYNX MODEL TYPE (glow_tts)",
+            #   "tts_path": "${RHASSPY_PROFILE}/tts//larynx/<language>/<voice>/",
+            #   "vocoder_type": "LARYNX MODEL TYPE (hifi_gan)",
+            #   "vocoder_path": "${RHASSPY_PROFILE}/tts/larynx/<vocoder>/<model>/"
+            # }
+            voice_language = str(voice_settings["language"])
+            voice_tts_type = str(voice_settings["tts_type"])
+            voice_tts_path = str(voice_settings["tts_path"])
+            voice_vocoder_type = str(voice_settings["vocoder_type"])
+            voice_vocoder_path = str(voice_settings["vocoder_path"])
+
             tts_command.extend(
                 [
-                    "--model",
+                    "--voice",
                     shlex.quote(voice),
-                    shlex.quote(str(write_path(profile, voice_settings["model"]))),
+                    shlex.quote(voice_language),
+                    shlex.quote(voice_tts_type),
+                    shlex.quote(str(write_path(profile, voice_tts_path))),
+                    shlex.quote(voice_vocoder_type),
+                    shlex.quote(str(write_path(profile, voice_vocoder_path))),
                 ]
             )
 
-            # Path to TTS model JSON configuration file.
-            # If not given, config.json is assumed to exist in the directory of
-            # the model.
-            voice_config = voice_settings.get("config")
-            if voice_config:
+            # Optional settings
+            tts_settings: typing.Dict[str, typing.Any] = voice_settings.get(
+                "tts_settings", {}
+            )
+            vocoder_settings: typing.Dict[str, typing.Any] = voice_settings.get(
+                "vocoder_settings", {}
+            )
+
+            for tts_key, tts_value in tts_settings.items():
                 tts_command.extend(
                     [
-                        "--config",
+                        "--tts-setting",
                         shlex.quote(voice),
-                        shlex.quote(str(write_path(profile, voice_config))),
+                        shlex.quote(str(tts_key)),
+                        shlex.quote(str(tts_value)),
                     ]
                 )
 
-            # Path to vocoder model checkpoint (.pth.tar)
-            voice_vocoder_model = voice_settings.get("vocoder_model")
-            if voice_vocoder_model:
+            for vocoder_key, vocoder_value in vocoder_settings.items():
                 tts_command.extend(
                     [
-                        "--vocoder-model",
+                        "--vocoder-setting",
                         shlex.quote(voice),
-                        shlex.quote(str(write_path(profile, voice_vocoder_model))),
-                    ]
-                )
-
-            # Path to vocoder model JSON configuration file.
-            # If not given, config.json is assumed to exist in the directory of
-            # the vocoder model.
-            voice_vocoder_config = voice_settings.get("vocoder_config")
-            if voice_vocoder_config:
-                tts_command.extend(
-                    [
-                        "--vocoder-config",
-                        shlex.quote(voice),
-                        shlex.quote(str(write_path(profile, voice_vocoder_config))),
+                        shlex.quote(str(vocoder_key)),
+                        shlex.quote(str(vocoder_value)),
                     ]
                 )
 
