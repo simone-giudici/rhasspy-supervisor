@@ -2464,6 +2464,16 @@ def get_text_to_speech(
             shlex.quote(str(write_path(profile, cache_dir))),
         ]
 
+        larynx_vocoder = str(
+            profile.get("text_to_speech.larynx.vocoder", "vctk_medium")
+        )
+        hifi_gan_path = "tts/larynx/hifi_gan"
+        default_vocoder_type, default_vocoder_path = {
+            "universal_large": ("hifi_gan", f"{hifi_gan_path}/universal_large"),
+            "vctk_medium": ("hifi_gan", f"{hifi_gan_path}/vctk_medium"),
+            "vctk_small": ("hifi_gan", f"{hifi_gan_path}/vctk_small"),
+        }[larynx_vocoder]
+
         for voice, voice_settings in voices.items():
             # Voice settings look like this:
             # {
@@ -2476,8 +2486,12 @@ def get_text_to_speech(
             voice_language = str(voice_settings["language"])
             voice_tts_type = str(voice_settings["tts_type"])
             voice_tts_path = str(voice_settings["tts_path"])
-            voice_vocoder_type = str(voice_settings["vocoder_type"])
-            voice_vocoder_path = str(voice_settings["vocoder_path"])
+            voice_vocoder_type = str(
+                voice_settings.get("vocoder_type", default_vocoder_type)
+            )
+            voice_vocoder_path = str(
+                voice_settings.get("vocoder_path", default_vocoder_path)
+            )
 
             tts_command.extend(
                 [
