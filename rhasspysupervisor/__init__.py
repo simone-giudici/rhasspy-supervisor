@@ -2462,6 +2462,8 @@ def get_text_to_speech(
             shlex.quote(str(default_voice)),
             "--cache-dir",
             shlex.quote(str(write_path(profile, cache_dir))),
+            "--gruut-dir",
+            shlex.quote(str(write_path(profile, "gruut"))),
         ]
 
         larynx_vocoder = str(
