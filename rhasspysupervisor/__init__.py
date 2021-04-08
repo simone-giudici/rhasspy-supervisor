@@ -2020,6 +2020,13 @@ def get_dialogue(
                     ["--min-asr-confidence", str(min_asr_confidence)]
                 )
 
+        # TTS timeout
+        say_chars_per_second = profile.get("dialogue.say_chars_per_second")
+        if say_chars_per_second is not None:
+            dialogue_command.extend(
+                ["--say-chars-per-second", str(say_chars_per_second)]
+            )
+
         return dialogue_command
 
     raise ValueError(f"Unsupported dialogue system (got {dialogue_system})")
