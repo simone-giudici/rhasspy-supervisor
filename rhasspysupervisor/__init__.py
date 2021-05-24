@@ -690,7 +690,8 @@ def get_wake(
 
         udp_audio = profile.get("wake.precise.udp_audio", "")
         if udp_audio:
-            add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
+            udp_raw_audio = profile.get("wake.precise.udp_raw_audio", False)
+            add_udp_audio_settings(wake_command, udp_audio, wake_site_id, udp_raw_audio)
 
         return wake_command
 
@@ -915,7 +916,9 @@ def print_wake(
         write_boilerplate(out_file)
 
 
-def add_udp_audio_settings(command: typing.List[str], udp_audio: str, site_id: str):
+def add_udp_audio_settings(
+    command: typing.List[str], udp_audio: str, site_id: str, udp_raw_audio: bool = False
+):
     """Parse UDP audio settings."""
 
     # Comma-separated list of host:port:siteId
@@ -949,6 +952,10 @@ def add_udp_audio_settings(command: typing.List[str], udp_audio: str, site_id: s
                 shlex.quote(udp_site_id),
             ]
         )
+
+        if udp_raw_audio:
+            # UDP audio is raw PCM instead of WAV chunks
+            command.append("--udp-raw-audio")
 
 
 # -----------------------------------------------------------------------------
@@ -1254,6 +1261,49 @@ def get_speech_to_text(
 
         # Silence detection
         add_silence_args(stt_command, profile)
+
+        return stt_command
+
+    if stt_system == "vosk":
+        # Vosk
+        model_dir = profile.get("speech_to_text.vosk.model_dir")
+        if not model_dir:
+            _LOGGER.error("speech_to_text.vosk.model_dir is required")
+            return []
+
+        model_dir = write_path(profile, model_dir)
+
+        # Open transcription
+        open_transcription = bool(
+            profile.get("speech_to_text.vosk.open_transcription", False)
+        )
+
+        stt_command = ["rhasspy-asr-vosk-hermes", "--model", str(model_dir)]
+
+        if open_transcription:
+            # Don't overwrite words JSON during training
+            stt_command.append("--no-overwrite-train")
+        else:
+            # Create lists of valid words from training sentences
+            words_json_path = profile.get(
+                "speech_to_text.vosk.words_json", "vosk/words.json"
+            )
+            stt_command.extend(
+                ["--words-json", shlex.quote(str(write_path(profile, words_json_path)))]
+            )
+
+        add_standard_args(
+            profile,
+            stt_command,
+            site_ids,
+            mqtt_host,
+            mqtt_port,
+            mqtt_username,
+            mqtt_password,
+        )
+
+        # Add --lang
+        add_lang_args(profile, stt_command, "speech_to_text")
 
         return stt_command
 
