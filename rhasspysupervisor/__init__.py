@@ -591,7 +591,8 @@ def get_wake(
 
         udp_audio = profile.get("wake.porcupine.udp_audio", "")
         if udp_audio:
-            add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
+            udp_site_info = profile.get("wake.porcupine.udp_site_info", {})
+            add_udp_audio_settings(wake_command, udp_audio, wake_site_id, udp_site_info)
 
         return wake_command
 
@@ -617,7 +618,8 @@ def get_wake(
 
         udp_audio = profile.get("wake.snowboy.udp_audio", "")
         if udp_audio:
-            add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
+            udp_site_info = profile.get("wake.snowboy.udp_site_info", {})
+            add_udp_audio_settings(wake_command, udp_audio, wake_site_id, udp_site_info)
 
         # Default settings
         sensitivity = str(profile.get("wake.snowboy.sensitivity", "0.5"))
@@ -690,8 +692,8 @@ def get_wake(
 
         udp_audio = profile.get("wake.precise.udp_audio", "")
         if udp_audio:
-            udp_raw_audio = profile.get("wake.precise.udp_raw_audio", False)
-            add_udp_audio_settings(wake_command, udp_audio, wake_site_id, udp_raw_audio)
+            udp_site_info = profile.get("wake.porcupine.udp_site_info", {})
+            add_udp_audio_settings(wake_command, udp_audio, wake_site_id, udp_site_info)
 
         return wake_command
 
@@ -742,7 +744,8 @@ def get_wake(
 
         udp_audio = profile.get("wake.pocketsphinx.udp_audio", "")
         if udp_audio:
-            add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
+            udp_site_info = profile.get("wake.pocketsphinx.udp_site_info", {})
+            add_udp_audio_settings(wake_command, udp_audio, wake_site_id, udp_site_info)
 
         mllr_matrix = profile.get("wake.pocketsphinx.mllr_matrix")
         if mllr_matrix:
@@ -836,7 +839,8 @@ def get_wake(
 
         udp_audio = profile.get("wake.raven.udp_audio", "")
         if udp_audio:
-            add_udp_audio_settings(wake_command, udp_audio, wake_site_id)
+            udp_site_info = profile.get("wake.pocketsphinx.udp_site_info", {})
+            add_udp_audio_settings(wake_command, udp_audio, wake_site_id, udp_site_info)
 
         return wake_command
 
@@ -917,7 +921,10 @@ def print_wake(
 
 
 def add_udp_audio_settings(
-    command: typing.List[str], udp_audio: str, site_id: str, udp_raw_audio: bool = False
+    command: typing.List[str],
+    udp_audio: str,
+    site_id: str,
+    udp_site_info: typing.Optional[typing.Dict[str, typing.Any]] = None,
 ):
     """Parse UDP audio settings."""
 
@@ -953,9 +960,15 @@ def add_udp_audio_settings(
             ]
         )
 
-        if udp_raw_audio:
-            # UDP audio is raw PCM instead of WAV chunks
-            command.append("--udp-raw-audio")
+        udp_site_info = udp_site_info or {}
+        for site_id, site_info in udp_site_info.items():
+            if site_info.get("raw_audio", False):
+                # UDP audio is raw PCM instead of WAV chunks
+                command.extend(["--udp-raw-audio", str(site_id)])
+
+            if site_info.get("forward_to_mqtt", False):
+                # UDP audio should be forwarded to MQTT after detection
+                command.extend(["--udp-forward-mqtt", str(site_id)])
 
 
 # -----------------------------------------------------------------------------
