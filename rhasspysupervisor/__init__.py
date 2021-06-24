@@ -961,14 +961,14 @@ def add_udp_audio_settings(
         )
 
         udp_site_info = udp_site_info or {}
-        for site_id, site_info in udp_site_info.items():
+        for udp_site_id, site_info in udp_site_info.items():
             if site_info.get("raw_audio", False):
                 # UDP audio is raw PCM instead of WAV chunks
-                command.extend(["--udp-raw-audio", str(site_id)])
+                command.extend(["--udp-raw-audio", str(udp_site_id)])
 
             if site_info.get("forward_to_mqtt", False):
                 # UDP audio should be forwarded to MQTT after detection
-                command.extend(["--udp-forward-mqtt", str(site_id)])
+                command.extend(["--udp-forward-mqtt", str(udp_site_id)])
 
 
 # -----------------------------------------------------------------------------
