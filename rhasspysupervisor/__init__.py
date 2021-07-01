@@ -1272,6 +1272,36 @@ def get_speech_to_text(
                 ]
             )
 
+        # Unknown words
+        frequent_words = profile.get("speech_to_text.kaldi.frequent_words")
+        if frequent_words:
+            stt_command.extend(
+                [
+                    "--frequent-words",
+                    shlex.quote(str(write_path(profile, frequent_words))),
+                ]
+            )
+
+        if profile.get("speech_to_text.kaldi.allow_unknown_words", False):
+            stt_command.append("--allow-unknown-words")
+
+        unknown_words_probability = profile.get(
+            "speech_to_text.kaldi.unknown_words_probability"
+        )
+        if unknown_words_probability is not None:
+            stt_command.extend(
+                [
+                    "--unknown-words-probability",
+                    shlex.quote(str(unknown_words_probability)),
+                ]
+            )
+
+        silence_probability = profile.get("speech_to_text.kaldi.silence_probability")
+        if silence_probability is not None:
+            stt_command.extend(
+                ["--silence-probability", shlex.quote(str(silence_probability))]
+            )
+
         # Silence detection
         add_silence_args(stt_command, profile)
 
