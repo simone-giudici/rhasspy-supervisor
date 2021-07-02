@@ -1302,6 +1302,10 @@ def get_speech_to_text(
                 ]
             )
 
+        unknown_token = profile.get("speech_to_text.kaldi.unknown_token")
+        if unknown_token is not None:
+            stt_command.extend(["--unknown-token", shlex.quote(str(unknown_token))])
+
         silence_probability = profile.get("speech_to_text.kaldi.silence_probability")
         if silence_probability is not None:
             stt_command.extend(
