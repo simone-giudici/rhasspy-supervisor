@@ -1278,8 +1278,14 @@ def get_speech_to_text(
             stt_command.extend(
                 [
                     "--frequent-words",
-                    shlex.quote(str(write_path(profile, frequent_words))),
+                    shlex.quote(str(profile.read_path(frequent_words))),
                 ]
+            )
+
+        max_frequent_words = profile.get("speech_to_text.kaldi.max_frequent_words")
+        if max_frequent_words:
+            stt_command.extend(
+                ["--max-frequent-words", shlex.quote(str(max_frequent_words))]
             )
 
         if profile.get("speech_to_text.kaldi.allow_unknown_words", False):
