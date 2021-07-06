@@ -2130,6 +2130,12 @@ def get_dialogue(
                 ["--say-chars-per-second", str(say_chars_per_second)]
             )
 
+        # Feedback sound extensions (suffixes, e.g. '.wav')
+        sound_suffixes = profile.get("dialogue.sound_suffixes")
+        if sound_suffixes is not None:
+            for sound_suffix in sound_suffixes:
+                dialogue_command.extend(["--sound-suffix", str(sound_suffix)])
+
         return dialogue_command
 
     raise ValueError(f"Unsupported dialogue system (got {dialogue_system})")
