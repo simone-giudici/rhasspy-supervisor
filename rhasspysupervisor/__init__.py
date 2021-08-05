@@ -1288,6 +1288,12 @@ def get_speech_to_text(
                 ["--max-frequent-words", shlex.quote(str(max_frequent_words))]
             )
 
+        max_unknown_words = profile.get("speech_to_text.kaldi.max_unknown_words")
+        if max_unknown_words:
+            stt_command.extend(
+                ["--max-unknown-words", shlex.quote(str(max_unknown_words))]
+            )
+
         if profile.get("speech_to_text.kaldi.allow_unknown_words", False):
             stt_command.append("--allow-unknown-words")
 
@@ -1310,6 +1316,16 @@ def get_speech_to_text(
         if silence_probability is not None:
             stt_command.extend(
                 ["--silence-probability", shlex.quote(str(silence_probability))]
+            )
+
+        cancel_word = profile.get("speech_to_text.kaldi.cancel_word")
+        if cancel_word is not None:
+            stt_command.extend(["--cancel-word", shlex.quote(str(cancel_word))])
+
+        cancel_probability = profile.get("speech_to_text.kaldi.cancel_probability")
+        if cancel_probability is not None:
+            stt_command.extend(
+                ["--cancel-probability", shlex.quote(str(cancel_probability))]
             )
 
         # Silence detection
@@ -1631,6 +1647,10 @@ def get_intent_recognition(
         intent_command.extend(
             ["--converters-dir", shlex.quote(str(write_path(profile, converters_dir)))]
         )
+
+        failure_token = profile.get("intent.fsticuffs.failure_token", "<unk>")
+        if failure_token:
+            intent_command.extend(["--failure-token", str(failure_token)])
 
         return intent_command
 
